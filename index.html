@@ -1175,12 +1175,54 @@ function getRecent7Days() {
 function buildSmoothPath(points) {
   if (points.length === 0) return "";
   if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  if (points.length === 2) {
+    return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
+  }
+
+  const n = points.length;
+  const secants = new Array(n - 1);
+  const tangents = new Array(n);
+
+  for (let i = 0; i < n - 1; i += 1) {
+    const dx = points[i + 1].x - points[i].x;
+    secants[i] = dx === 0 ? 0 : (points[i + 1].y - points[i].y) / dx;
+  }
+
+  tangents[0] = secants[0];
+  tangents[n - 1] = secants[n - 2];
+  for (let i = 1; i < n - 1; i += 1) {
+    const prev = secants[i - 1];
+    const next = secants[i];
+    tangents[i] = prev * next <= 0 ? 0 : (prev + next) / 2;
+  }
+
+  for (let i = 0; i < n - 1; i += 1) {
+    const slope = secants[i];
+    if (slope === 0) {
+      tangents[i] = 0;
+      tangents[i + 1] = 0;
+      continue;
+    }
+    const a = tangents[i] / slope;
+    const b = tangents[i + 1] / slope;
+    const norm = Math.hypot(a, b);
+    if (norm > 3) {
+      const scale = 3 / norm;
+      tangents[i] = scale * a * slope;
+      tangents[i + 1] = scale * b * slope;
+    }
+  }
+
   let d = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 1; i < points.length; i += 1) {
-    const prev = points[i - 1];
-    const curr = points[i];
-    const cx = (prev.x + curr.x) / 2;
-    d += ` Q ${cx} ${prev.y}, ${curr.x} ${curr.y}`;
+  for (let i = 0; i < n - 1; i += 1) {
+    const p0 = points[i];
+    const p1 = points[i + 1];
+    const dx = p1.x - p0.x;
+    const c1x = p0.x + dx / 3;
+    const c1y = p0.y + (tangents[i] * dx) / 3;
+    const c2x = p1.x - dx / 3;
+    const c2y = p1.y - (tangents[i + 1] * dx) / 3;
+    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p1.x} ${p1.y}`;
   }
   return d;
 }
