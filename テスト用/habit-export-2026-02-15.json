@@ -1,0 +1,259 @@
+{
+ "appVersion" : "1.0.0",
+": exportDate": "2026-02-15T11:05:38.725Z",
+  "data": {
+    "lastOpenedDate": "2026-2-15",
+    "habits": [
+      {
+        "text": "2",
+        "done": false
+      },
+      {
+        "text": "1",
+        "done": true
+      },
+      {
+        "text": "3",
+        "done": true
+      },
+      {
+        "text": "4",
+        "done": true
+      },
+      {
+        "text": "5",
+        "done": true
+      },
+      {
+        "text": "6",
+        "done": false
+      },
+      {
+        "text": "7",
+        "done": false
+      },
+      {
+        "text": "8",
+        "done": false
+      },
+      {
+        "text": "9",
+        "done": false
+      },
+      {
+        "text": "10",
+        "done": true
+      },
+      {
+        "text": "11",
+        "done": false
+      },
+      {
+        "text": "12",
+        "done": true
+      },
+      {
+        "text": "13",
+        "done": false
+      },
+      {
+        "text": "114",
+        "done": false
+      },
+      {
+        "text": "16",
+        "done": false
+      },
+      {
+        "text": "15",
+        "done": false
+      },
+      {
+        "text": "17",
+        "done": false
+      },
+      {
+        "text": "18",
+        "done": false
+      },
+      {
+        "text": "19",
+        "done": false
+      },
+      {
+        "text": "20",
+        "done": true
+      },
+      {
+        "text": "21",
+        "done": false
+      },
+      {
+        "text": "22",
+        "done": true
+      },
+      {
+        "text": "23",
+        "done": false
+      },
+      {
+        "text": "810",
+        "done": false
+      },
+      {
+        "text": "25",
+        "done": false
+      },
+      {
+        "text": "26",
+        "done": false
+      },
+      {
+        "text": "27",
+        "done": false
+      },
+      {
+        "text": "28",
+        "done": false
+      },
+      {
+        "text": "29",
+        "done": false
+      },
+      {
+        "text": "30",
+        "done": true
+      }
+    ],
+    "rateHistoryByDate": {
+      "2026-2-15": 30
+    },
+    "dailySnapshotByDate": {
+      "2026-2-15": {
+        "rate": 30,
+        "habits": [
+          {
+            "text": "2",
+            "done": false
+          },
+          {
+            "text": "1",
+            "done": true
+          },
+          {
+            "text": "3",
+            "done": true
+          },
+          {
+            "text": "4",
+            "done": true
+          },
+          {
+            "text": "5",
+            "done": true
+          },
+          {
+            "text": "6",
+            "done": false
+          },
+          {
+            "text": "7",
+            "done": false
+          },
+          {
+            "text": "8",
+            "done": false
+          },
+          {
+            "text": "9",
+            "done": false
+          },
+          {
+            "text": "10",
+            "done": true
+          },
+          {
+            "text": "11",
+            "done": false
+          },
+          {
+            "text": "12",
+            "done": true
+          },
+          {
+            "text": "13",
+            "done": false
+          },
+          {
+            "text": "114",
+            "done": false
+          },
+          {
+            "text": "16",
+            "done": false
+          },
+          {
+            "text": "15",
+            "done": false
+          },
+          {
+            "text": "17",
+            "done": false
+          },
+          {
+            "text": "18",
+            "done": false
+          },
+          {
+            "text": "19",
+            "done": false
+          },
+          {
+            "text": "20",
+            "done": true
+          },
+          {
+            "text": "21",
+            "done": false
+          },
+          {
+            "text": "22",
+            "done": true
+          },
+          {
+            "text": "23",
+            "done": false
+          },
+          {
+            "text": "810",
+            "done": false
+          },
+          {
+            "text": "25",
+            "done": false
+          },
+          {
+            "text": "26",
+            "done": false
+          },
+          {
+            "text": "27",
+            "done": false
+          },
+          {
+            "text": "28",
+            "done": false
+          },
+          {
+            "text": "29",
+            "done": false
+          },
+          {
+            "text": "30",
+            "done": true
+          }
+        ]
+      }
+    }
+  }
+}

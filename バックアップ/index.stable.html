@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1b202b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="習慣チェック">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/app-icon.svg">
+<title>習慣チェック</title>
+
+<style>
+:root {
+  --bg: #1b202b;
+  --surface: #242b38;
+  --surface-2: #2d3647;
+  --text: #e9edf5;
+  --muted: #aab3c5;
+  --border: #3a4357;
+  --accent: #63a4ff;
+  --danger: #d9534f;
+  --done-bg: #173428;
+  --done-flash: #1f4a37;
+  --done-text: #8ad8ae;
+  --soft-green: #79c9a0;
+  --soft-red: #e68d8d;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== ヘッダー ===== */
+header {
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+}
+
+header h1 {
+  font-size: 22px;
+  margin: 0;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.streak {
+  font-size: 12px;
+  color: #ffd36a;
+  margin-top: 4px;
+}
+
+.edit-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.app.edit-mode .edit-btn {
+  background: var(--accent);
+  color: #08131f;
+  border-color: transparent;
+}
+
+.export-btn {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.import-btn {
+  position: absolute;
+  left: 34px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+
+.progress-wrap {
+  padding: 12px 16px 22px;
+}
+
+.progress-slider {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+}
+
+.progress-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.progress-page {
+  flex: 0 0 100%;
+  min-width: 100%;
+  scroll-snap-align: start;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.progress-ring {
+  width: 164px;
+  height: 164px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.progress-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-track {
+  fill: none;
+  stroke: #3b455b;
+  stroke-width: 10;
+}
+
+.ring-value {
+  fill: none;
+  stroke: #79c9a0;
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition:
+    stroke-dashoffset 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    stroke 0.55s ease;
+}
+
+.ring-value.complete {
+  stroke: #6fb6ff;
+}
+
+.progress-ring.animate {
+  animation: ring-pop 0.28s ease-out;
+}
+
+.history-panel {
+  width: min(100%, 360px);
+  min-height: 170px;
+  margin: 0 auto;
+}
+
+.history-svg {
+  width: 100%;
+  height: 128px;
+  display: block;
+}
+
+.history-grid {
+  stroke: #3b455b;
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.history-path {
+  fill: none;
+  stroke: #79c9a0;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.history-dots circle {
+  fill: #79c9a0;
+}
+
+.history-dots circle.active {
+  fill: #6fb6ff;
+}
+
+.history-dots .dot-hit {
+  fill: transparent;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.history-labels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.history-title {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.history-detail {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(27, 32, 43, 0.65);
+  border: 1px solid var(--border);
+}
+
+.history-detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.history-detail-rate {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.history-detail-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  max-height: 72px;
+  overflow-y: auto;
+}
+
+.history-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text);
+  padding: 2px 0;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 8px;
+}
+
+.status-dot.done {
+  background: var(--soft-green);
+}
+
+.status-dot.todo {
+  background: var(--soft-red);
+}
+
+.history-empty {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.progress-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5a6376;
+}
+
+.progress-dot.active {
+  background: #8abfff;
+}
+
+.progress-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.progress-percent {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+@keyframes ring-pop {
+  0% { transform: scale(0.97); }
+  70% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* ===== リスト ===== */
+.list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 12px 80px;
+}
+
+.empty-hint {
+  display: none;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 8px 0 10px;
+}
+
+.empty-hint.show {
+  display: block;
+}
+
+/* スワイプ用ラッパー */
+.swipe-wrapper {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  transition: transform 0.18s ease;
+}
+
+/* 削除エリア（初期非表示） */
+.delete-area {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 72px;
+  height: 100%;
+  background: var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+}
+
+.swipe-wrapper.swiped .delete-area {
+  transform: translateX(0);
+}
+
+/* ===== アイテム本体 ===== */
+.item {
+  display: flex;
+  align-items: stretch;
+  background: var(--surface-2);
+  user-select: none;
+  transform: translateX(0);
+  transition:
+    transform 0.2s ease,
+    background-color 0.25s ease-out;
+}
+
+.item.dragging {
+  transition: none;
+  opacity: 0.96;
+  position: relative;
+  z-index: 30;
+  pointer-events: none;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+}
+
+.swipe-wrapper.drag-source {
+  overflow: visible;
+  z-index: 5;
+}
+
+/* swiped 時 */
+.swipe-wrapper.swiped .item {
+  transform: translateX(-72px);
+}
+
+/* 完了時 */
+/* ===== 完了ワンアクション演出 ===== */
+
+/* 完了直後の一瞬だけ濃い緑 */
+.item.just-done {
+  background-color: var(--done-flash);
+}
+
+.item.done {
+  background-color: var(--done-bg);
+}
+
+/* チェックのアニメーション */
+.check {
+  font-size: 18px;
+  color: var(--done-text);
+  opacity: 0;
+  transform: scale(0.7);
+  transition:
+    transform 0.25s ease-out,
+    opacity 0.15s ease-out;
+}
+
+.item.done .check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.item.done {
+  background: var(--done-bg);
+}
+
+.item.done .text {
+  color: var(--done-text);
+}
+
+.drag-handle {
+  width: 0;
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  touch-action: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-8px) scale(0.94);
+  transition:
+    width 0.56s ease,
+    opacity 0.48s ease,
+    transform 0.62s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app.edit-mode .drag-handle {
+  width: 40px;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0) scale(1);
+}
+
+.edit-item-btn {
+  display: none;
+  width: 48px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.app.edit-mode .edit-item-btn {
+  display: block;
+}
+
+/* テキスト */
+.text {
+  flex: 1;
+  padding: 14px 12px;
+  font-size: 15px;
+  transform: translateX(0);
+  transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app.edit-mode .text {
+  transform: translateX(6px);
+}
+
+/* チェックエリア（背景は全体と同化） */
+.check-area {
+  width: 40px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* プラスボタン */
+.add-btn {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  font-size: 28px;
+  color: #08131f;
+  background: var(--accent);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 20, 0.5);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, visibility 0.22s ease;
+}
+
+.modal-backdrop.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.habit-modal {
+  width: min(100%, 360px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.35);
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+}
+
+.modal-backdrop.show .habit-modal {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.habit-modal-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  text-align: center;
+}
+
+.habit-modal-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 16px;
+  text-align: center;
+  padding: 10px 12px;
+  outline: none;
+}
+
+.habit-modal-input:focus {
+  border-color: var(--accent);
+}
+
+.habit-modal-actions {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.habit-modal-btn {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 14px;
+  touch-action: manipulation;
+}
+
+.habit-modal-btn.primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: #08131f;
+  grid-column: 2;
+}
+
+.habit-modal-btn.cancel {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.confirm-modal-message {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-line;
+  text-align: center;
+}
+
+.confirm-modal-actions {
+  margin-top: 12px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 34px;
+}
+
+#confirmModalOk {
+  margin: 0 auto;
+}
+
+#confirmModalCancel {
+  position: absolute;
+  right: 0;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header>
+  <div class="header-top">
+    <button class="export-btn" id="exportBtn" aria-label="エクスポート">⤴</button>
+    <button class="import-btn" id="importBtn" aria-label="インポート">⤵</button>
+    <h1 id="date"></h1>
+    <button class="edit-btn" id="editBtn">編集</button>
+  </div>
+  <div class="streak" id="streak"></div>
+</header>
+
+<div class="progress-wrap" id="progressWrap">
+  <div class="progress-slider" id="progressSlider">
+    <div class="progress-page">
+      <div class="progress-ring" id="progressRing">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+          <circle class="ring-value" id="ringValue" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <div class="progress-center">
+          <div class="progress-percent" id="progressPercent">0%</div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-page">
+      <div class="history-panel" id="historyPanel">
+        <div class="history-title">直近7日</div>
+        <svg class="history-svg" viewBox="0 0 280 120" aria-hidden="true">
+          <line class="history-grid" x1="10" y1="100" x2="270" y2="100"></line>
+          <line class="history-grid" x1="10" y1="55" x2="270" y2="55"></line>
+          <line class="history-grid" x1="10" y1="10" x2="270" y2="10"></line>
+          <path class="history-path" id="historyPath"></path>
+      <g class="history-dots" id="historyDots"></g>
+    </svg>
+    <div class="history-labels" id="historyLabels"></div>
+    <div class="history-detail" id="historyDetail" hidden>
+      <div class="history-detail-head">
+        <span id="historyDetailDate">-</span>
+        <span class="history-detail-rate" id="historyDetailRate">0%</span>
+      </div>
+      <ul class="history-detail-list" id="historyDetailList"></ul>
+      <div class="history-empty" id="historyEmpty" hidden>この日の記録はありません</div>
+    </div>
+  </div>
+    </div>
+  </div>
+  <div class="progress-dots" aria-hidden="true">
+    <span class="progress-dot active" id="progressDotRing"></span>
+    <span class="progress-dot" id="progressDotHistory"></span>
+  </div>
+</div>
+
+<div class="empty-hint" id="emptyHint">何か習慣を追加してみましょう！</div>
+<div class="list" id="list"></div>
+
+<button class="add-btn" id="addBtn">＋</button>
+
+</div>
+
+<input id="importFileInput" type="file" accept="application/json,.json" hidden />
+
+<div class="modal-backdrop" id="habitModalBackdrop" aria-hidden="true">
+  <div class="habit-modal" role="dialog" aria-modal="true" aria-labelledby="habitModalTitle">
+    <h2 class="habit-modal-title" id="habitModalTitle">習慣を追加</h2>
+    <input class="habit-modal-input" id="habitModalInput" type="text" maxlength="60" />
+    <div class="habit-modal-actions">
+      <button class="habit-modal-btn primary" id="habitModalSave" type="button">完了</button>
+      <button class="habit-modal-btn cancel" id="habitModalCancel" type="button">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="confirmModalBackdrop" aria-hidden="true">
+  <div class="habit-modal" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+    <h2 class="habit-modal-title" id="confirmModalTitle">確認</h2>
+    <p class="confirm-modal-message" id="confirmModalMessage"></p>
+    <div class="confirm-modal-actions">
+      <button class="habit-modal-btn" id="confirmModalCancel" type="button">キャンセル</button>
+      <button class="habit-modal-btn primary" id="confirmModalOk" type="button">実行</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const DATE_KEY = "lastOpenedDate";
+const STORAGE_KEY = "habits";
+const STREAK_COUNT_KEY = "streakCount";
+const STREAK_LAST_DATE_KEY = "streakLastDate";
+const RATE_HISTORY_KEY = "rateHistoryByDate";
+const DAILY_SNAPSHOT_KEY = "dailySnapshotByDate";
+const APP_STORAGE_KEYS = [
+  STORAGE_KEY,
+  DATE_KEY,
+  STREAK_COUNT_KEY,
+  STREAK_LAST_DATE_KEY,
+  RATE_HISTORY_KEY,
+  DAILY_SNAPSHOT_KEY
+];
+let habits = loadHabits();
+let openedWrapper = null;
+let isEditMode = false;
+let reorderEnabled = false;
+
+const appEl = document.querySelector(".app");
+const listEl = document.getElementById("list");
+const emptyHintEl = document.getElementById("emptyHint");
+const dateEl = document.getElementById("date");
+const streakEl = document.getElementById("streak");
+const exportBtn = document.getElementById("exportBtn");
+const importBtn = document.getElementById("importBtn");
+const editBtn = document.getElementById("editBtn");
+const progressSliderEl = document.getElementById("progressSlider");
+const progressRingEl = document.getElementById("progressRing");
+const ringValueEl = document.getElementById("ringValue");
+const progressPercentEl = document.getElementById("progressPercent");
+const historyPathEl = document.getElementById("historyPath");
+const historyDotsEl = document.getElementById("historyDots");
+const historyLabelsEl = document.getElementById("historyLabels");
+const historyDetailEl = document.getElementById("historyDetail");
+const historyDetailDateEl = document.getElementById("historyDetailDate");
+const historyDetailRateEl = document.getElementById("historyDetailRate");
+const historyDetailListEl = document.getElementById("historyDetailList");
+const historyEmptyEl = document.getElementById("historyEmpty");
+const progressDotRingEl = document.getElementById("progressDotRing");
+const progressDotHistoryEl = document.getElementById("progressDotHistory");
+const habitModalBackdropEl = document.getElementById("habitModalBackdrop");
+const habitModalTitleEl = document.getElementById("habitModalTitle");
+const habitModalInputEl = document.getElementById("habitModalInput");
+const habitModalCancelEl = document.getElementById("habitModalCancel");
+const habitModalSaveEl = document.getElementById("habitModalSave");
+const confirmModalBackdropEl = document.getElementById("confirmModalBackdrop");
+const confirmModalTitleEl = document.getElementById("confirmModalTitle");
+const confirmModalMessageEl = document.getElementById("confirmModalMessage");
+const confirmModalCancelEl = document.getElementById("confirmModalCancel");
+const confirmModalOkEl = document.getElementById("confirmModalOk");
+const importFileInputEl = document.getElementById("importFileInput");
+
+const RING_RADIUS = 52;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+const APP_VERSION = "1.0.0";
+let displayedRate = -1;
+let selectedHistoryKey = "";
+let currentProgressPage = 0;
+let historyAnimationFrameId = null;
+let currentHistoryPoints = null;
+let onHabitModalSave = null;
+let onConfirmResolve = null;
+let confirmModalConfig = {
+  allowBackdropClose: true,
+  allowEscapeClose: true
+};
+let lastTapTime = 0;
+let lastTapX = 0;
+let lastTapY = 0;
+
+ringValueEl.style.strokeDasharray = `${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`;
+ringValueEl.style.strokeDashoffset = `${RING_CIRCUMFERENCE}`;
+
+dateEl.textContent = new Date().toLocaleDateString("ja-JP", {
+  month: "long",
+  day: "numeric",
+  weekday: "short"
+});
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+}
+
+function openHabitModal(title, initialValue, onSave) {
+  onHabitModalSave = onSave;
+  habitModalTitleEl.textContent = title;
+  habitModalInputEl.value = initialValue || "";
+  habitModalBackdropEl.classList.add("show");
+  habitModalBackdropEl.setAttribute("aria-hidden", "false");
+  setTimeout(() => {
+    habitModalInputEl.focus();
+    habitModalInputEl.select();
+  }, 0);
+}
+
+function closeHabitModal() {
+  habitModalInputEl.blur();
+  habitModalBackdropEl.classList.remove("show");
+  habitModalBackdropEl.setAttribute("aria-hidden", "true");
+  onHabitModalSave = null;
+}
+
+function submitHabitModal() {
+  if (typeof onHabitModalSave !== "function") {
+    closeHabitModal();
+    return;
+  }
+  const value = habitModalInputEl.value.trim();
+  if (!value) return;
+  onHabitModalSave(value);
+  closeHabitModal();
+}
+
+function openConfirmModal({
+  title = "確認",
+  message = "",
+  okText = "実行",
+  cancelText = "キャンセル",
+  showCancel = true,
+  allowBackdropClose = true,
+  allowEscapeClose = true
+}) {
+  confirmModalTitleEl.textContent = title;
+  confirmModalMessageEl.textContent = message;
+  confirmModalOkEl.textContent = okText;
+  confirmModalCancelEl.textContent = cancelText;
+  confirmModalCancelEl.hidden = !showCancel;
+  confirmModalConfig = {
+    allowBackdropClose,
+    allowEscapeClose
+  };
+  confirmModalBackdropEl.classList.add("show");
+  confirmModalBackdropEl.setAttribute("aria-hidden", "false");
+  setTimeout(() => {
+    confirmModalOkEl.focus();
+  }, 0);
+
+  return new Promise(resolve => {
+    onConfirmResolve = resolve;
+  });
+}
+
+function closeConfirmModal(result) {
+  confirmModalBackdropEl.classList.remove("show");
+  confirmModalBackdropEl.setAttribute("aria-hidden", "true");
+  if (typeof onConfirmResolve === "function") {
+    onConfirmResolve(result);
+  }
+  onConfirmResolve = null;
+  confirmModalCancelEl.hidden = false;
+  confirmModalConfig = {
+    allowBackdropClose: true,
+    allowEscapeClose: true
+  };
+}
+
+function safeParseJson(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw;
+  }
+}
+
+function collectLocalStorageData() {
+  const storageDump = {};
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+    const raw = localStorage.getItem(key);
+    storageDump[key] = safeParseJson(raw);
+  }
+  return storageDump;
+}
+
+function downloadJson(payload, filename) {
+  const jsonText = JSON.stringify(payload, null, 2);
+  const blob = new Blob([jsonText], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportLocalStorageAsJson() {
+  const storageDump = collectLocalStorageData();
+  const payload = {
+    appVersion: APP_VERSION,
+    exportDate: new Date().toISOString(),
+    data: storageDump
+  };
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  downloadJson(payload, `habit-export-${dateStamp}.json`);
+  void openConfirmModal({
+    title: "エクスポート完了",
+    message: "エクスポートが完了しました。",
+    okText: "OK",
+    showCancel: false,
+    allowBackdropClose: false,
+    allowEscapeClose: false
+  });
+}
+
+function backupCurrentDataBeforeImport() {
+  const payload = {
+    appVersion: APP_VERSION,
+    exportDate: new Date().toISOString(),
+    backupReason: "before-import-overwrite",
+    data: collectLocalStorageData()
+  };
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  downloadJson(payload, `habit-backup-before-import-${stamp}.json`);
+}
+
+function isPlainObject(value) {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function validateImportPayload(payload) {
+  if (!isPlainObject(payload)) {
+    return { ok: false, message: "JSONのトップレベルがオブジェクトではありません。" };
+  }
+  if (typeof payload.appVersion !== "string" || !payload.appVersion.trim()) {
+    return { ok: false, message: "appVersion がありません。" };
+  }
+  if (typeof payload.exportDate !== "string" || Number.isNaN(Date.parse(payload.exportDate))) {
+    return { ok: false, message: "exportDate が不正です。" };
+  }
+  if (!isPlainObject(payload.data)) {
+    return { ok: false, message: "data がオブジェクトではありません。" };
+  }
+  return { ok: true, message: "" };
+}
+
+function applyImportedData(data) {
+  APP_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
+  Object.entries(data).forEach(([key, value]) => {
+    if (typeof value === "string") {
+      localStorage.setItem(key, value);
+      return;
+    }
+    localStorage.setItem(key, JSON.stringify(value));
+  });
+}
+
+async function handleImportPayload(payload) {
+  const check = validateImportPayload(payload);
+  if (!check.ok) {
+    alert(`インポートエラー: ${check.message}`);
+    return;
+  }
+
+  const shouldImport = await openConfirmModal({
+    title: "インポート確認",
+    message: `このデータを読み込みますか？\nappVersion: ${payload.appVersion}\nexportDate: ${payload.exportDate}\n現在のデータは上書きされます。`,
+    okText: "読み込む",
+    cancelText: "キャンセル"
+  });
+  if (!shouldImport) return;
+
+  try {
+    backupCurrentDataBeforeImport();
+    applyImportedData(payload.data);
+    habits = loadHabits();
+    selectedHistoryKey = "";
+    setEditMode(false);
+    updateProgressDots();
+    render();
+    await openConfirmModal({
+      title: "復元完了",
+      message: "インポートが完了しました。",
+      okText: "OK",
+      showCancel: false,
+      allowBackdropClose: false,
+      allowEscapeClose: false
+    });
+  } catch (err) {
+    alert(`インポートエラー: ${err instanceof Error ? err.message : "読み込みに失敗しました。"}`);
+  }
+}
+
+function loadHabits() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.warn("habits の読み込みに失敗したため初期化します", err);
+    localStorage.removeItem(STORAGE_KEY);
+    return [];
+  }
+}
+
+function getTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+function parseDateKey(key) {
+  if (!key) return null;
+  const parts = key.split("-").map(Number);
+  if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+  return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+function getPrevDateKey(key) {
+  const d = parseDateKey(key);
+  if (!d) return "";
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+function getStoredStreakCount() {
+  const raw = localStorage.getItem(STREAK_COUNT_KEY);
+  const count = Number.parseInt(raw || "0", 10);
+  return Number.isNaN(count) ? 0 : Math.max(0, count);
+}
+
+function loadRateHistory() {
+  try {
+    const raw = localStorage.getItem(RATE_HISTORY_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (err) {
+    localStorage.removeItem(RATE_HISTORY_KEY);
+    return {};
+  }
+}
+
+function saveRateHistory(history) {
+  const pruned = { ...history };
+  const now = new Date();
+  const oldest = new Date(now);
+  oldest.setDate(oldest.getDate() - 35);
+  const oldestTime = oldest.getTime();
+  Object.keys(pruned).forEach(key => {
+    const date = parseDateKey(key);
+    if (!date || date.getTime() < oldestTime) {
+      delete pruned[key];
+    }
+  });
+  localStorage.setItem(RATE_HISTORY_KEY, JSON.stringify(pruned));
+}
+
+function writeDailyRateHistory(dateKey, rate) {
+  if (!dateKey) return;
+  const history = loadRateHistory();
+  history[dateKey] = Math.max(0, Math.min(100, rate));
+  saveRateHistory(history);
+}
+
+function loadDailySnapshots() {
+  try {
+    const raw = localStorage.getItem(DAILY_SNAPSHOT_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (err) {
+    localStorage.removeItem(DAILY_SNAPSHOT_KEY);
+    return {};
+  }
+}
+
+function saveDailySnapshots(allSnapshots) {
+  const pruned = { ...allSnapshots };
+  const now = new Date();
+  const oldest = new Date(now);
+  oldest.setDate(oldest.getDate() - 35);
+  const oldestTime = oldest.getTime();
+  Object.keys(pruned).forEach(key => {
+    const date = parseDateKey(key);
+    if (!date || date.getTime() < oldestTime) {
+      delete pruned[key];
+    }
+  });
+  localStorage.setItem(DAILY_SNAPSHOT_KEY, JSON.stringify(pruned));
+}
+
+function buildSnapshotFromHabits(rate) {
+  return {
+    rate,
+    habits: habits.map(h => ({ text: h.text, done: !!h.done }))
+  };
+}
+
+function writeDailySnapshot(dateKey, rate) {
+  if (!dateKey) return;
+  const snapshots = loadDailySnapshots();
+  snapshots[dateKey] = buildSnapshotFromHabits(rate);
+  saveDailySnapshots(snapshots);
+}
+
+function getRecent7Days() {
+  const out = [];
+  const today = new Date();
+  for (let i = 6; i >= 0; i -= 1) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    const label = d.toLocaleDateString("ja-JP", { weekday: "short" });
+    out.push({ key, label });
+  }
+  return out;
+}
+
+function buildSmoothPath(points) {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i += 1) {
+    const prev = points[i - 1];
+    const curr = points[i];
+    const cx = (prev.x + curr.x) / 2;
+    d += ` Q ${cx} ${prev.y}, ${curr.x} ${curr.y}`;
+  }
+  return d;
+}
+
+function getHistoryChartData() {
+  const history = loadRateHistory();
+  const snapshots = loadDailySnapshots();
+  const days = getRecent7Days();
+  const minX = 16;
+  const maxX = 264;
+  const minY = 12;
+  const maxY = 100;
+  const stepX = (maxX - minX) / 6;
+  const points = days.map((day, i) => {
+    const rate = Number(history[day.key] ?? 0);
+    const normalized = Math.max(0, Math.min(100, rate)) / 100;
+    const x = minX + stepX * i;
+    const y = maxY - normalized * (maxY - minY);
+    return { x, y, rate };
+  });
+  return { history, snapshots, days, points, maxY };
+}
+
+function paintHistoryGraph(days, points, history, snapshots) {
+  historyPathEl.setAttribute("d", buildSmoothPath(points));
+  historyDotsEl.innerHTML = "";
+  points.forEach((p, i) => {
+    const day = days[i];
+    const hit = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    hit.setAttribute("cx", String(p.x));
+    hit.setAttribute("cy", String(p.y));
+    hit.setAttribute("r", "12");
+    hit.classList.add("dot-hit");
+
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", String(p.x));
+    circle.setAttribute("cy", String(p.y));
+    circle.setAttribute("r", selectedHistoryKey === day.key ? "4.6" : "3.2");
+    if (selectedHistoryKey === day.key) {
+      circle.classList.add("active");
+    }
+    hit.addEventListener("click", () => {
+      selectedHistoryKey = selectedHistoryKey === day.key ? "" : day.key;
+      renderHistoryGraph();
+    });
+    historyDotsEl.appendChild(hit);
+    historyDotsEl.appendChild(circle);
+  });
+  historyLabelsEl.innerHTML = days.map(day => `<span>${day.label}</span>`).join("");
+  currentHistoryPoints = points.map(p => ({ ...p }));
+
+  if (!selectedHistoryKey) {
+    historyDetailEl.hidden = true;
+    historyDetailListEl.innerHTML = "";
+    historyEmptyEl.hidden = true;
+    return;
+  }
+
+  historyDetailEl.hidden = false;
+  const selectedDay = days.find(day => day.key === selectedHistoryKey) || days[days.length - 1];
+  const selectedSnapshot = snapshots[selectedDay.key];
+  const selectedRate = Number(
+    history[selectedDay.key] ?? (selectedSnapshot ? selectedSnapshot.rate : 0)
+  );
+  historyDetailDateEl.textContent = selectedDay.key;
+  historyDetailRateEl.textContent = `${selectedRate}%`;
+  historyDetailListEl.innerHTML = "";
+
+  if (!selectedSnapshot || !Array.isArray(selectedSnapshot.habits) || selectedSnapshot.habits.length === 0) {
+    historyEmptyEl.hidden = false;
+    return;
+  }
+
+  historyEmptyEl.hidden = true;
+  selectedSnapshot.habits.forEach(item => {
+    const li = document.createElement("li");
+    li.className = "history-detail-item";
+    const dot = document.createElement("span");
+    dot.className = `status-dot ${item.done ? "done" : "todo"}`;
+    const text = document.createElement("span");
+    text.textContent = item.text;
+    li.appendChild(dot);
+    li.appendChild(text);
+    historyDetailListEl.appendChild(li);
+  });
+}
+
+function renderHistoryGraph() {
+  const { history, snapshots, days, points } = getHistoryChartData();
+  paintHistoryGraph(days, points, history, snapshots);
+}
+
+function animateHistoryGraphTransition() {
+  const { history, snapshots, days, points: targetPoints } = getHistoryChartData();
+  if (historyAnimationFrameId) {
+    cancelAnimationFrame(historyAnimationFrameId);
+    historyAnimationFrameId = null;
+  }
+
+  const hasBase =
+    Array.isArray(currentHistoryPoints) &&
+    currentHistoryPoints.length === targetPoints.length;
+  const basePoints = hasBase
+    ? currentHistoryPoints.map(p => ({ ...p }))
+    : targetPoints.map(p => ({ ...p }));
+
+  const delayPerPointMs = 30;
+  const pointDurationMs = 220;
+  const totalDurationMs = pointDurationMs + delayPerPointMs * (targetPoints.length - 1);
+  let startTime = 0;
+
+  const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+  const frame = now => {
+    if (!startTime) startTime = now;
+    const elapsed = now - startTime;
+    const animatedPoints = targetPoints.map((target, i) => {
+      const base = basePoints[i];
+      const local = Math.max(0, Math.min(1, (elapsed - i * delayPerPointMs) / pointDurationMs));
+      const eased = easeOutCubic(local);
+      const goingUp = target.y < base.y;
+      const overshoot = goingUp ? Math.sin(Math.PI * local) * 2.8 : 0;
+      return {
+        ...target,
+        y: base.y + (target.y - base.y) * eased - overshoot
+      };
+    });
+
+    paintHistoryGraph(days, animatedPoints, history, snapshots);
+
+    if (elapsed < totalDurationMs) {
+      historyAnimationFrameId = requestAnimationFrame(frame);
+    } else {
+      historyAnimationFrameId = null;
+      paintHistoryGraph(days, targetPoints, history, snapshots);
+    }
+  };
+
+  historyAnimationFrameId = requestAnimationFrame(frame);
+}
+
+function animateHistoryGraphFromZero() {
+  const { history, snapshots, days, points: targetPoints, maxY } = getHistoryChartData();
+  if (historyAnimationFrameId) {
+    cancelAnimationFrame(historyAnimationFrameId);
+    historyAnimationFrameId = null;
+  }
+
+  const delayPerPointMs = 55;
+  const pointDurationMs = 300;
+  const totalDurationMs = pointDurationMs + delayPerPointMs * (targetPoints.length - 1);
+  let startTime = 0;
+
+  const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+  const frame = now => {
+    if (!startTime) startTime = now;
+    const elapsed = now - startTime;
+    const animatedPoints = targetPoints.map((target, i) => {
+      const local = Math.max(0, Math.min(1, (elapsed - i * delayPerPointMs) / pointDurationMs));
+      const eased = easeOutCubic(local);
+      return {
+        ...target,
+        y: maxY + (target.y - maxY) * eased
+      };
+    });
+
+    paintHistoryGraph(days, animatedPoints, history, snapshots);
+
+    if (elapsed < totalDurationMs) {
+      historyAnimationFrameId = requestAnimationFrame(frame);
+    } else {
+      historyAnimationFrameId = null;
+      paintHistoryGraph(days, targetPoints, history, snapshots);
+    }
+  };
+
+  historyAnimationFrameId = requestAnimationFrame(frame);
+}
+
+function isHistoryPageVisible() {
+  const pageWidth = progressSliderEl.clientWidth || 1;
+  return progressSliderEl.scrollLeft > pageWidth * 0.2;
+}
+
+function updateProgressDots() {
+  const pageWidth = progressSliderEl.clientWidth || 1;
+  const page = progressSliderEl.scrollLeft >= pageWidth / 2 ? 1 : 0;
+  progressDotRingEl.classList.toggle("active", page === 0);
+  progressDotHistoryEl.classList.toggle("active", page === 1);
+
+  if (page !== currentProgressPage) {
+    if (page === 1) {
+      animateHistoryGraphFromZero();
+    } else {
+      if (historyAnimationFrameId) {
+        cancelAnimationFrame(historyAnimationFrameId);
+        historyAnimationFrameId = null;
+      }
+      if (selectedHistoryKey) {
+        selectedHistoryKey = "";
+      }
+      renderHistoryGraph();
+    }
+    currentProgressPage = page;
+  }
+}
+
+function setStoredStreak(count, lastDate) {
+  localStorage.setItem(STREAK_COUNT_KEY, String(Math.max(0, count)));
+  localStorage.setItem(STREAK_LAST_DATE_KEY, lastDate || "");
+}
+
+function isPerfectDay() {
+  return habits.length > 0 && habits.every(h => h.done);
+}
+
+function updateStreakDisplay() {
+  if (!isPerfectDay()) {
+    streakEl.textContent = "";
+    return;
+  }
+
+  const todayKey = getTodayKey();
+  const storedCount = getStoredStreakCount();
+  const storedLastDate = localStorage.getItem(STREAK_LAST_DATE_KEY) || "";
+  const expectedPrev = getPrevDateKey(todayKey);
+  const displayCount = storedLastDate === expectedPrev ? storedCount + 1 : 1;
+  if (displayCount < 2) {
+    streakEl.textContent = "";
+    return;
+  }
+  streakEl.textContent = `${displayCount}日連続達成中`;
+}
+
+function resetHabitsIfNewDay() {
+  const todayKey = getTodayKey();
+  const lastDate = localStorage.getItem(DATE_KEY);
+  if (lastDate === todayKey) return false;
+
+  if (lastDate) {
+    const done = habits.filter(h => h.done).length;
+    const total = habits.length;
+    const lastRate = total === 0 ? 0 : Math.round(done / total * 100);
+    writeDailyRateHistory(lastDate, lastRate);
+    writeDailySnapshot(lastDate, lastRate);
+
+    const yesterdayKey = getPrevDateKey(todayKey);
+    const isContinuousDay = lastDate === yesterdayKey;
+    const wasPerfect = isPerfectDay();
+    const storedCount = getStoredStreakCount();
+    const storedLastDate = localStorage.getItem(STREAK_LAST_DATE_KEY) || "";
+    if (!isContinuousDay) {
+      setStoredStreak(0, "");
+    } else if (wasPerfect) {
+      const expectedPrev = getPrevDateKey(lastDate);
+      const nextCount = storedLastDate === expectedPrev ? storedCount + 1 : 1;
+      setStoredStreak(nextCount, lastDate);
+    } else {
+      setStoredStreak(0, "");
+    }
+  }
+
+  habits.forEach(h => {
+    h.done = false;
+  });
+  save();
+  localStorage.setItem(DATE_KEY, todayKey);
+  return true;
+}
+
+function moveHabit(fromIndex, toIndex) {
+  if (fromIndex === toIndex) return;
+  const [moved] = habits.splice(fromIndex, 1);
+  habits.splice(toIndex, 0, moved);
+}
+
+function setEditMode(enabled) {
+  isEditMode = enabled;
+  reorderEnabled = enabled;
+  appEl.classList.toggle("edit-mode", enabled);
+  editBtn.textContent = enabled ? "完了" : "編集";
+  closeOpened();
+}
+
+function updateRate() {
+  const total = habits.length;
+  const done = habits.filter(h => h.done).length;
+  const rate = total === 0 ? 0 : Math.round(done / total * 100);
+  const prevRate = displayedRate;
+  writeDailyRateHistory(getTodayKey(), rate);
+  writeDailySnapshot(getTodayKey(), rate);
+
+  progressPercentEl.textContent = `${rate}%`;
+
+  const ratio = Math.max(0, Math.min(1, rate / 100));
+  const dashOffset = RING_CIRCUMFERENCE * (1 - ratio);
+  ringValueEl.style.strokeDashoffset = `${dashOffset}`;
+  ringValueEl.classList.toggle("complete", rate === 100);
+
+  if (rate > displayedRate) {
+    progressRingEl.classList.remove("animate");
+    void progressRingEl.offsetWidth;
+    progressRingEl.classList.add("animate");
+  }
+  displayedRate = rate;
+  if (isHistoryPageVisible() && rate !== prevRate) {
+    animateHistoryGraphTransition();
+  } else {
+    renderHistoryGraph();
+  }
+
+  updateStreakDisplay();
+}
+
+function closeOpened() {
+  if (openedWrapper) {
+    openedWrapper.classList.remove("swiped");
+    openedWrapper = null;
+  }
+}
+
+function render() {
+  listEl.innerHTML = "";
+  openedWrapper = null;
+  let renderedCount = 0;
+
+  habits.forEach((habit, index) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "swipe-wrapper";
+
+    const deleteArea = document.createElement("div");
+    deleteArea.className = "delete-area";
+    deleteArea.textContent = "削除";
+    deleteArea.addEventListener("click", () => {
+      if (!isEditMode) return;
+      habits.splice(index, 1);
+      save();
+      render();
+    });
+
+    const item = document.createElement("div");
+    item.className = "item";
+    if (habit.done) item.classList.add("done");
+
+    const dragHandle = document.createElement("div");
+    dragHandle.className = "drag-handle";
+    dragHandle.textContent = "≡";
+
+    const text = document.createElement("div");
+    text.className = "text";
+    text.textContent = habit.text;
+
+    const editItemBtn = document.createElement("button");
+    editItemBtn.className = "edit-item-btn";
+    editItemBtn.textContent = "編集";
+    editItemBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      if (!isEditMode) return;
+      openHabitModal("習慣を編集", habit.text, value => {
+        habits[index].text = value;
+        save();
+        render();
+      });
+    });
+
+    const checkArea = document.createElement("div");
+    checkArea.className = "check-area";
+
+    const check = document.createElement("div");
+    check.className = "check";
+    check.textContent = "✓";
+
+    checkArea.appendChild(check);
+
+    let startX = 0;
+    let startY = 0;
+    let deltaX = 0;
+    let isSwipeGesture = false;
+    let movedDuringTouch = false;
+    let isDragging = false;
+    let activePointerId = null;
+    let dragStartY = 0;
+    let dragFromIndex = index;
+    let dragToIndex = index;
+    let dragWrapperRefs = [];
+    let dragMidPoints = [];
+    let dragShiftAmount = 0;
+    const dragGap = 8;
+
+    const clearDragPreview = () => {
+      dragWrapperRefs.forEach(w => {
+        w.style.transform = "";
+      });
+    };
+
+    const applyDragPreview = () => {
+      clearDragPreview();
+      if (!isDragging) return;
+      if (dragToIndex > dragFromIndex) {
+        for (let i = dragFromIndex + 1; i <= dragToIndex; i += 1) {
+          dragWrapperRefs[i].style.transform = `translateY(${-dragShiftAmount}px)`;
+        }
+      } else if (dragToIndex < dragFromIndex) {
+        for (let i = dragToIndex; i < dragFromIndex; i += 1) {
+          dragWrapperRefs[i].style.transform = `translateY(${dragShiftAmount}px)`;
+        }
+      }
+    };
+
+    const resolveDropIndex = draggedCenterY => {
+      let nextIndex = 0;
+      for (let i = 0; i < dragMidPoints.length; i += 1) {
+        if (draggedCenterY > dragMidPoints[i]) {
+          nextIndex = i + 1;
+        }
+      }
+      if (nextIndex > dragFromIndex) nextIndex -= 1;
+      return Math.max(0, Math.min(habits.length - 1, nextIndex));
+    };
+
+    item.addEventListener("touchstart", e => {
+      closeOpened();
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      deltaX = 0;
+      isSwipeGesture = false;
+      movedDuringTouch = false;
+    });
+
+    item.addEventListener("touchmove", e => {
+      const touchX = e.touches[0].clientX;
+      const touchY = e.touches[0].clientY;
+      const dx = touchX - startX;
+      const dy = touchY - startY;
+
+      if (!isEditMode) {
+        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+          movedDuringTouch = true;
+        }
+        return;
+      }
+
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+        isSwipeGesture = true;
+        deltaX = dx;
+        item.style.transform = `translateX(${Math.min(0, Math.max(dx, -72))}px)`;
+      }
+    }, { passive: false });
+
+   item.addEventListener("touchend", () => {
+  if (isEditMode) {
+    item.style.transform = "";
+    if (isSwipeGesture) {
+      if (deltaX < -40) {
+        wrapper.classList.add("swiped");
+        openedWrapper = wrapper;
+      } else {
+        wrapper.classList.remove("swiped");
+      }
+    }
+    return;
+  }
+
+  item.style.transform = "";
+  if (movedDuringTouch) return;
+
+  const wasDone = habits[index].done;
+  habits[index].done = !habits[index].done;
+
+  // 完了 -> 未完了
+  if (wasDone) {
+    save();
+    render();
+    return;
+  }
+
+  // 未完了 -> 完了（演出）
+  item.classList.add("just-done");
+  item.classList.add("done");
+  setTimeout(() => {
+    item.classList.remove("just-done");
+    save();
+    render();
+  }, 300);
+});
+
+    dragHandle.addEventListener("pointerdown", e => {
+      if (!reorderEnabled) return;
+      e.preventDefault();
+      closeOpened();
+      isDragging = true;
+      activePointerId = e.pointerId;
+      dragStartY = e.clientY;
+      dragFromIndex = index;
+      dragToIndex = index;
+      dragWrapperRefs = Array.from(listEl.querySelectorAll(".swipe-wrapper"));
+      dragMidPoints = dragWrapperRefs.map(w => {
+        const rect = w.getBoundingClientRect();
+        return rect.top + rect.height / 2;
+      });
+      dragShiftAmount = wrapper.offsetHeight + dragGap;
+      wrapper.classList.add("drag-source");
+      item.classList.add("dragging");
+      item.style.transform = "translateY(0)";
+      dragHandle.setPointerCapture(e.pointerId);
+    });
+
+    dragHandle.addEventListener("pointermove", e => {
+      if (!isDragging || e.pointerId !== activePointerId) return;
+      e.preventDefault();
+      const translateY = e.clientY - dragStartY;
+      item.style.transform = `translateY(${translateY}px)`;
+      const sourceRect = wrapper.getBoundingClientRect();
+      const draggedCenterY = sourceRect.top + sourceRect.height / 2 + translateY;
+      const nextDragToIndex = resolveDropIndex(draggedCenterY);
+      dragToIndex = nextDragToIndex;
+      applyDragPreview();
+    });
+
+    const finishDrag = e => {
+      if (!isDragging || e.pointerId !== activePointerId) return;
+      isDragging = false;
+      activePointerId = null;
+      item.style.transform = "";
+      clearDragPreview();
+      wrapper.classList.remove("drag-source");
+      item.classList.remove("dragging");
+      if (dragToIndex !== dragFromIndex) {
+        moveHabit(dragFromIndex, dragToIndex);
+        save();
+      }
+      render();
+    };
+
+    dragHandle.addEventListener("pointerup", finishDrag);
+    dragHandle.addEventListener("pointercancel", finishDrag);
+
+    item.addEventListener("touchcancel", () => {
+      item.style.transform = "";
+      clearDragPreview();
+      wrapper.classList.remove("drag-source");
+      item.classList.remove("dragging");
+    });
+
+    item.appendChild(dragHandle);
+    item.appendChild(text);
+    item.appendChild(editItemBtn);
+    item.appendChild(checkArea);
+    wrapper.appendChild(deleteArea);
+    wrapper.appendChild(item);
+    listEl.appendChild(wrapper);
+    renderedCount += 1;
+  });
+
+  emptyHintEl.classList.toggle("show", renderedCount === 0);
+  updateRate();
+}
+
+document.getElementById("addBtn").addEventListener("click", () => {
+  openHabitModal("習慣を追加", "", value => {
+    habits.push({ text: value, done: false });
+    save();
+    render();
+  });
+});
+
+exportBtn.addEventListener("click", async () => {
+  const ok = await openConfirmModal({
+    title: "エクスポート確認",
+    message: "現在のデータをJSONでエクスポートしますか？",
+    okText: "エクスポート",
+    cancelText: "キャンセル"
+  });
+  if (!ok) return;
+  exportLocalStorageAsJson();
+});
+importBtn.addEventListener("click", async () => {
+  const ok = await openConfirmModal({
+    title: "インポート確認",
+    message: "インポートするJSONファイルを選択しますか？",
+    okText: "ファイル選択へ",
+    cancelText: "キャンセル"
+  });
+  if (!ok) return;
+  importFileInputEl.value = "";
+  importFileInputEl.click();
+});
+
+editBtn.addEventListener("click", () => {
+  setEditMode(!isEditMode);
+});
+
+progressSliderEl.addEventListener("scroll", updateProgressDots, { passive: true });
+window.addEventListener("resize", updateProgressDots);
+
+habitModalCancelEl.addEventListener("click", closeHabitModal);
+habitModalSaveEl.addEventListener("click", submitHabitModal);
+habitModalBackdropEl.addEventListener("click", e => {
+  if (e.target === habitModalBackdropEl) {
+    closeHabitModal();
+  }
+});
+habitModalInputEl.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    submitHabitModal();
+  } else if (e.key === "Escape") {
+    closeHabitModal();
+  }
+});
+
+importFileInputEl.addEventListener("change", async e => {
+  const target = e.target;
+  if (!(target instanceof HTMLInputElement) || !target.files || target.files.length === 0) {
+    return;
+  }
+  const file = target.files[0];
+  try {
+    const text = await file.text();
+    const payload = JSON.parse(text);
+    await handleImportPayload(payload);
+  } catch {
+    alert("インポートエラー: 有効なJSONファイルではありません。");
+  }
+});
+
+confirmModalCancelEl.addEventListener("click", () => closeConfirmModal(false));
+confirmModalOkEl.addEventListener("click", () => closeConfirmModal(true));
+confirmModalBackdropEl.addEventListener("click", e => {
+  if (e.target === confirmModalBackdropEl && confirmModalConfig.allowBackdropClose) {
+    closeConfirmModal(false);
+  }
+});
+document.addEventListener("keydown", e => {
+  if (!confirmModalBackdropEl.classList.contains("show")) return;
+  if (e.key === "Escape" && confirmModalConfig.allowEscapeClose) {
+    closeConfirmModal(false);
+  }
+});
+
+if (resetHabitsIfNewDay()) {
+  render();
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && resetHabitsIfNewDay()) {
+    render();
+  }
+});
+
+setInterval(() => {
+  if (document.visibilityState === "visible" && resetHabitsIfNewDay()) {
+    render();
+  }
+}, 60 * 1000);
+
+if (!isEditMode) {
+  setEditMode(false);
+}
+
+render();
+updateProgressDots();
+
+if ("serviceWorker" in navigator) {
+  const isLocalDevHost =
+    location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  if (isLocalDevHost) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(reg => reg.unregister());
+      });
+    });
+  } else {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js").catch(err => {
+        console.warn("Service Worker registration failed:", err);
+      });
+    });
+  }
+}
+</script>
+</body>
+</html>
