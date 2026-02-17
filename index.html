@@ -1888,21 +1888,11 @@ render();
 updateProgressDots();
 
 if ("serviceWorker" in navigator) {
-  const isLocalDevHost =
-    location.hostname === "localhost" || location.hostname === "127.0.0.1";
-  if (isLocalDevHost) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(reg => reg.unregister());
-      });
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(err => {
+      console.warn("Service Worker registration failed:", err);
     });
-  } else {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./service-worker.js").catch(err => {
-        console.warn("Service Worker registration failed:", err);
-      });
-    });
-  }
+  });
 }
 </script>
 </body>
