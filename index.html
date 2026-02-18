@@ -366,7 +366,7 @@ header h1 {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 8px 12px 80px;
+  padding: 8px 12px 118px;
 }
 
 .empty-hint {
@@ -537,19 +537,57 @@ header h1 {
   justify-content: center;
 }
 
-/* プラスボタン */
-.add-btn {
+/* ===== 下部ドック ===== */
+.bottom-dock-wrap {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: none;
-  font-size: 28px;
-  color: #08131f;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  padding: 0 12px calc(8px + env(safe-area-inset-bottom));
+  z-index: 20;
+}
+
+.bottom-dock {
+  width: min(100%, 420px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 24px;
+  background: rgba(36, 43, 56, 0.82);
+  border: 1px solid rgba(138, 191, 255, 0.22);
+  box-shadow: 0 12px 22px rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+
+.dock-btn {
+  border: 1px solid var(--border);
+  background: rgba(45, 54, 71, 0.9);
+  color: var(--text);
+  border-radius: 16px;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.dock-btn.add-btn {
   background: var(--accent);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  border-color: transparent;
+  color: #08131f;
+}
+
+.dock-icon {
+  font-size: 20px;
+  line-height: 1;
 }
 
 .modal-backdrop {
@@ -730,7 +768,18 @@ header h1 {
 <div class="empty-hint" id="emptyHint">何か習慣を追加してみましょう！</div>
 <div class="list" id="list"></div>
 
-<button class="add-btn" id="addBtn">＋</button>
+<div class="bottom-dock-wrap">
+  <nav class="bottom-dock" aria-label="下部ナビゲーション">
+    <button class="dock-btn add-btn" id="addBtn" type="button">
+      <span class="dock-icon" aria-hidden="true">＋</span>
+      <span>追加</span>
+    </button>
+    <button class="dock-btn" id="calendarBtn" type="button">
+      <span class="dock-icon" aria-hidden="true">📅</span>
+      <span>カレンダー</span>
+    </button>
+  </nav>
+</div>
 
 </div>
 
@@ -812,6 +861,7 @@ const confirmModalMessageEl = document.getElementById("confirmModalMessage");
 const confirmModalCancelEl = document.getElementById("confirmModalCancel");
 const confirmModalOkEl = document.getElementById("confirmModalOk");
 const importFileInputEl = document.getElementById("importFileInput");
+const calendarBtn = document.getElementById("calendarBtn");
 
 const RING_RADIUS = 52;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -1788,6 +1838,15 @@ document.getElementById("addBtn").addEventListener("click", () => {
     habits.push({ text: value, done: false });
     save();
     render();
+  });
+});
+
+calendarBtn.addEventListener("click", () => {
+  void openConfirmModal({
+    title: "カレンダー",
+    message: "月/年のカレンダー画面はこれから追加します。",
+    okText: "OK",
+    showCancel: false
   });
 });
 
