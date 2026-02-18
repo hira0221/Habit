@@ -708,6 +708,195 @@ header h1 {
   position: absolute;
   right: 0;
 }
+
+.calendar-modal {
+  width: min(100%, 420px);
+  max-height: min(80vh, 620px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.35);
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-backdrop.show .calendar-modal {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.calendar-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.calendar-close-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.calendar-controls {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.calendar-nav-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.calendar-period {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.calendar-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.calendar-mode-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.calendar-mode-btn.active {
+  background: var(--accent);
+  border-color: transparent;
+  color: #08131f;
+}
+
+.calendar-content {
+  overflow: auto;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.calendar-day {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  background: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.calendar-day.empty {
+  visibility: hidden;
+}
+
+.calendar-day-num {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.calendar-day-rate {
+  font-size: 11px;
+  text-align: right;
+  color: var(--text);
+}
+
+.calendar-day[data-level="high"] {
+  border-color: rgba(121, 201, 160, 0.65);
+  background: rgba(23, 52, 40, 0.9);
+}
+
+.calendar-day[data-level="mid"] {
+  border-color: rgba(138, 191, 255, 0.55);
+}
+
+.calendar-day.today {
+  box-shadow: inset 0 0 0 1px rgba(138, 191, 255, 0.65);
+}
+
+.calendar-year-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.calendar-month-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  background: var(--surface-2);
+}
+
+.calendar-month-name {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.calendar-month-value {
+  margin-top: 6px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.calendar-month-sub {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.calendar-empty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 18px 0 8px;
+}
 </style>
 </head>
 
@@ -771,11 +960,11 @@ header h1 {
 <div class="bottom-dock-wrap">
   <nav class="bottom-dock" aria-label="下部ナビゲーション">
     <button class="dock-btn add-btn" id="addBtn" type="button">
-      <span class="dock-icon" aria-hidden="true">＋</span>
+      <span class="dock-icon" aria-hidden="true">+</span>
       <span>追加</span>
     </button>
     <button class="dock-btn" id="calendarBtn" type="button">
-      <span class="dock-icon" aria-hidden="true">📅</span>
+      <span class="dock-icon" aria-hidden="true">Cal</span>
       <span>カレンダー</span>
     </button>
   </nav>
@@ -804,6 +993,25 @@ header h1 {
       <button class="habit-modal-btn" id="confirmModalCancel" type="button">キャンセル</button>
       <button class="habit-modal-btn primary" id="confirmModalOk" type="button">実行</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="calendarModalBackdrop" aria-hidden="true">
+  <div class="calendar-modal" role="dialog" aria-modal="true" aria-labelledby="calendarTitle">
+    <div class="calendar-head">
+      <h2 class="calendar-title" id="calendarTitle">記録カレンダー</h2>
+      <button class="calendar-close-btn" id="calendarCloseBtn" type="button" aria-label="閉じる">×</button>
+    </div>
+    <div class="calendar-mode-switch" role="tablist" aria-label="表示切替">
+      <button class="calendar-mode-btn active" id="calendarModeMonth" type="button">月</button>
+      <button class="calendar-mode-btn" id="calendarModeYear" type="button">年</button>
+    </div>
+    <div class="calendar-controls">
+      <button class="calendar-nav-btn" id="calendarPrevBtn" type="button" aria-label="前へ">‹</button>
+      <div class="calendar-period" id="calendarPeriodLabel"></div>
+      <button class="calendar-nav-btn" id="calendarNextBtn" type="button" aria-label="次へ">›</button>
+    </div>
+    <div class="calendar-content" id="calendarContent"></div>
   </div>
 </div>
 
@@ -862,6 +1070,14 @@ const confirmModalCancelEl = document.getElementById("confirmModalCancel");
 const confirmModalOkEl = document.getElementById("confirmModalOk");
 const importFileInputEl = document.getElementById("importFileInput");
 const calendarBtn = document.getElementById("calendarBtn");
+const calendarModalBackdropEl = document.getElementById("calendarModalBackdrop");
+const calendarCloseBtn = document.getElementById("calendarCloseBtn");
+const calendarModeMonthBtn = document.getElementById("calendarModeMonth");
+const calendarModeYearBtn = document.getElementById("calendarModeYear");
+const calendarPrevBtn = document.getElementById("calendarPrevBtn");
+const calendarNextBtn = document.getElementById("calendarNextBtn");
+const calendarPeriodLabelEl = document.getElementById("calendarPeriodLabel");
+const calendarContentEl = document.getElementById("calendarContent");
 
 const RING_RADIUS = 52;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -880,6 +1096,8 @@ let confirmModalConfig = {
 let lastTapTime = 0;
 let lastTapX = 0;
 let lastTapY = 0;
+let calendarMode = "month";
+let calendarCursorDate = new Date();
 
 ringValueEl.style.strokeDasharray = `${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`;
 ringValueEl.style.strokeDashoffset = `${RING_CIRCUMFERENCE}`;
@@ -1126,6 +1344,163 @@ function getPrevDateKey(key) {
   if (!d) return "";
   d.setDate(d.getDate() - 1);
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+function getDateKeyFromDate(date) {
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+}
+
+function resolveDailyRate(dateKey, history, snapshots) {
+  const historyRate = Number(history[dateKey]);
+  if (Number.isFinite(historyRate)) {
+    return Math.max(0, Math.min(100, historyRate));
+  }
+  const snapshotRate = Number((snapshots[dateKey] && snapshots[dateKey].rate) ?? NaN);
+  if (Number.isFinite(snapshotRate)) {
+    return Math.max(0, Math.min(100, snapshotRate));
+  }
+  return null;
+}
+
+function renderCalendarMonth(history, snapshots) {
+  const year = calendarCursorDate.getFullYear();
+  const month = calendarCursorDate.getMonth();
+  calendarPeriodLabelEl.textContent = `${year}年${month + 1}月`;
+  calendarContentEl.innerHTML = "";
+
+  const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+  const weekdayRow = document.createElement("div");
+  weekdayRow.className = "calendar-weekdays";
+  weekdayRow.innerHTML = weekdays.map(label => `<div class="calendar-weekday">${label}</div>`).join("");
+
+  const grid = document.createElement("div");
+  grid.className = "calendar-grid";
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayKey = getTodayKey();
+  let hasData = false;
+
+  for (let i = 0; i < firstDay; i += 1) {
+    const empty = document.createElement("div");
+    empty.className = "calendar-day empty";
+    grid.appendChild(empty);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const d = new Date(year, month, day);
+    const dateKey = getDateKeyFromDate(d);
+    const rate = resolveDailyRate(dateKey, history, snapshots);
+    const dayEl = document.createElement("div");
+    dayEl.className = "calendar-day";
+    if (rate !== null) {
+      hasData = true;
+      if (rate >= 80) {
+        dayEl.dataset.level = "high";
+      } else if (rate > 0) {
+        dayEl.dataset.level = "mid";
+      }
+    }
+    if (dateKey === todayKey) {
+      dayEl.classList.add("today");
+    }
+    dayEl.innerHTML = `
+      <div class="calendar-day-num">${day}</div>
+      <div class="calendar-day-rate">${rate === null ? "-" : `${rate}%`}</div>
+    `;
+    grid.appendChild(dayEl);
+  }
+
+  calendarContentEl.appendChild(weekdayRow);
+  calendarContentEl.appendChild(grid);
+  if (!hasData) {
+    const emptyText = document.createElement("div");
+    emptyText.className = "calendar-empty";
+    emptyText.textContent = "この月の記録はまだありません";
+    calendarContentEl.appendChild(emptyText);
+  }
+}
+
+function renderCalendarYear(history, snapshots) {
+  const year = calendarCursorDate.getFullYear();
+  calendarPeriodLabelEl.textContent = `${year}年`;
+  calendarContentEl.innerHTML = "";
+
+  const monthsJa = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+  const grid = document.createElement("div");
+  grid.className = "calendar-year-grid";
+  let hasData = false;
+
+  for (let month = 0; month < 12; month += 1) {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let total = 0;
+    let count = 0;
+    let perfect = 0;
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const key = getDateKeyFromDate(new Date(year, month, day));
+      const rate = resolveDailyRate(key, history, snapshots);
+      if (rate === null) continue;
+      total += rate;
+      count += 1;
+      if (rate === 100) perfect += 1;
+    }
+
+    if (count > 0) hasData = true;
+    const avg = count > 0 ? Math.round(total / count) : null;
+    const card = document.createElement("div");
+    card.className = "calendar-month-card";
+    card.innerHTML = `
+      <div class="calendar-month-name">${monthsJa[month]}</div>
+      <div class="calendar-month-value">${avg === null ? "-" : `${avg}%`}</div>
+      <div class="calendar-month-sub">記録日 ${count}日 / 100%達成 ${perfect}日</div>
+    `;
+    grid.appendChild(card);
+  }
+
+  calendarContentEl.appendChild(grid);
+  if (!hasData) {
+    const emptyText = document.createElement("div");
+    emptyText.className = "calendar-empty";
+    emptyText.textContent = "この年の記録はまだありません";
+    calendarContentEl.appendChild(emptyText);
+  }
+}
+
+function renderCalendarView() {
+  calendarModeMonthBtn.classList.toggle("active", calendarMode === "month");
+  calendarModeYearBtn.classList.toggle("active", calendarMode === "year");
+  const history = loadRateHistory();
+  const snapshots = loadDailySnapshots();
+  if (calendarMode === "month") {
+    renderCalendarMonth(history, snapshots);
+  } else {
+    renderCalendarYear(history, snapshots);
+  }
+}
+
+function shiftCalendarCursor(step) {
+  if (calendarMode === "month") {
+    calendarCursorDate = new Date(calendarCursorDate.getFullYear(), calendarCursorDate.getMonth() + step, 1);
+  } else {
+    calendarCursorDate = new Date(calendarCursorDate.getFullYear() + step, calendarCursorDate.getMonth(), 1);
+  }
+  renderCalendarView();
+}
+
+function openCalendarModal() {
+  calendarMode = "month";
+  calendarCursorDate = new Date();
+  calendarModalBackdropEl.classList.add("show");
+  calendarModalBackdropEl.setAttribute("aria-hidden", "false");
+  renderCalendarView();
+  setTimeout(() => {
+    calendarCloseBtn.focus();
+  }, 0);
+}
+
+function closeCalendarModal() {
+  calendarModalBackdropEl.classList.remove("show");
+  calendarModalBackdropEl.setAttribute("aria-hidden", "true");
 }
 
 function getStoredStreakCount() {
@@ -1842,12 +2217,23 @@ document.getElementById("addBtn").addEventListener("click", () => {
 });
 
 calendarBtn.addEventListener("click", () => {
-  void openConfirmModal({
-    title: "カレンダー",
-    message: "月/年のカレンダー画面はこれから追加します。",
-    okText: "OK",
-    showCancel: false
-  });
+  openCalendarModal();
+});
+calendarCloseBtn.addEventListener("click", closeCalendarModal);
+calendarModeMonthBtn.addEventListener("click", () => {
+  calendarMode = "month";
+  renderCalendarView();
+});
+calendarModeYearBtn.addEventListener("click", () => {
+  calendarMode = "year";
+  renderCalendarView();
+});
+calendarPrevBtn.addEventListener("click", () => shiftCalendarCursor(-1));
+calendarNextBtn.addEventListener("click", () => shiftCalendarCursor(1));
+calendarModalBackdropEl.addEventListener("click", e => {
+  if (e.target === calendarModalBackdropEl) {
+    closeCalendarModal();
+  }
 });
 
 exportBtn.addEventListener("click", async () => {
@@ -1917,9 +2303,14 @@ confirmModalBackdropEl.addEventListener("click", e => {
   }
 });
 document.addEventListener("keydown", e => {
-  if (!confirmModalBackdropEl.classList.contains("show")) return;
-  if (e.key === "Escape" && confirmModalConfig.allowEscapeClose) {
-    closeConfirmModal(false);
+  if (confirmModalBackdropEl.classList.contains("show")) {
+    if (e.key === "Escape" && confirmModalConfig.allowEscapeClose) {
+      closeConfirmModal(false);
+    }
+    return;
+  }
+  if (calendarModalBackdropEl.classList.contains("show") && e.key === "Escape") {
+    closeCalendarModal();
   }
 });
 
