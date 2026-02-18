@@ -546,48 +546,68 @@ header h1 {
   display: flex;
   justify-content: center;
   pointer-events: none;
-  padding: 0 12px calc(8px + env(safe-area-inset-bottom));
+  padding: 0 12px calc(32px + env(safe-area-inset-bottom));
   z-index: 20;
 }
 
 .bottom-dock {
-  width: min(100%, 420px);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 10px;
+  width: min(100%, 336px);
+  height: 76px;
+  padding: 0 8px;
   border-radius: 24px;
   background: rgba(36, 43, 56, 0.82);
   border: 1px solid rgba(138, 191, 255, 0.22);
   box-shadow: 0 12px 22px rgba(0,0,0,0.3);
   backdrop-filter: blur(8px);
   pointer-events: auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+}
+
+.dock-spacer {
+  width: 1px;
+  height: 1px;
+  justify-self: center;
 }
 
 .dock-btn {
-  border: 1px solid var(--border);
-  background: rgba(45, 54, 71, 0.9);
+  border: none;
+  background: transparent;
   color: var(--text);
-  border-radius: 16px;
-  min-height: 52px;
+  border-radius: 999px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  justify-self: center;
 }
 
-.dock-btn.add-btn {
+.add-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
   background: var(--accent);
-  border-color: transparent;
   color: #08131f;
+  font-size: 28px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.28);
 }
 
 .dock-icon {
-  font-size: 20px;
+  font-size: 24px;
   line-height: 1;
+}
+
+.calendar-dock-btn {
+  transform: translateX(-6px);
+}
+
+.calendar-dock-svg {
+  width: 28px;
+  height: 28px;
+  display: block;
 }
 
 .modal-backdrop {
@@ -959,13 +979,22 @@ header h1 {
 
 <div class="bottom-dock-wrap">
   <nav class="bottom-dock" aria-label="下部ナビゲーション">
-    <button class="dock-btn add-btn" id="addBtn" type="button">
-      <span class="dock-icon" aria-hidden="true">+</span>
-      <span>追加</span>
+    <span class="dock-spacer" aria-hidden="true"></span>
+    <button class="dock-btn add-btn" id="addBtn" type="button" aria-label="追加">
+      +
     </button>
-    <button class="dock-btn" id="calendarBtn" type="button">
-      <span class="dock-icon" aria-hidden="true">Cal</span>
-      <span>カレンダー</span>
+    <button class="dock-btn calendar-dock-btn" id="calendarBtn" type="button" aria-label="カレンダー">
+      <svg class="calendar-dock-svg" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3.5" y="5.5" width="17" height="15" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"></rect>
+        <line x1="3.5" y1="9" x2="20.5" y2="9" stroke="currentColor" stroke-width="1.8"></line>
+        <line x1="8" y1="3.8" x2="8" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></line>
+        <line x1="16" y1="3.8" x2="16" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></line>
+        <circle cx="8.2" cy="12.6" r="0.95" fill="currentColor"></circle>
+        <circle cx="12" cy="12.6" r="0.95" fill="currentColor"></circle>
+        <circle cx="15.8" cy="12.6" r="0.95" fill="currentColor"></circle>
+        <circle cx="8.2" cy="16.2" r="0.95" fill="currentColor"></circle>
+        <circle cx="12" cy="16.2" r="0.95" fill="currentColor"></circle>
+      </svg>
     </button>
   </nav>
 </div>
