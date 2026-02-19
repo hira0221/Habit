@@ -140,6 +140,30 @@ header h1 {
   padding: 12px 16px 22px;
 }
 
+.time-slot-switch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 320px;
+  margin: 0 auto 10px;
+}
+
+.time-slot-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 999px;
+  min-height: 34px;
+  font-size: 12px;
+}
+
+.time-slot-btn.active {
+  background: var(--accent);
+  border-color: transparent;
+  color: #08131f;
+  font-weight: 700;
+}
+
 .progress-slider {
   display: flex;
   flex-wrap: nowrap;
@@ -298,6 +322,17 @@ header h1 {
   font-size: 11px;
   color: var(--text);
   padding: 2px 0;
+}
+
+.history-slot-badge {
+  min-width: 24px;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.5;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
 }
 
 .status-dot {
@@ -672,6 +707,29 @@ header h1 {
   border-color: var(--accent);
 }
 
+.habit-slot-picker {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.habit-slot-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 999px;
+  min-height: 34px;
+  font-size: 12px;
+}
+
+.habit-slot-btn.active {
+  background: var(--accent);
+  border-color: transparent;
+  color: #08131f;
+  font-weight: 700;
+}
+
 .habit-modal-actions {
   margin-top: 12px;
   display: grid;
@@ -985,6 +1043,11 @@ header h1 {
 </header>
 
 <div class="progress-wrap" id="progressWrap">
+  <div class="time-slot-switch" id="timeSlotSwitch" aria-label="時間帯切替">
+    <button class="time-slot-btn active" type="button" data-slot="morning">朝</button>
+    <button class="time-slot-btn" type="button" data-slot="noon">昼</button>
+    <button class="time-slot-btn" type="button" data-slot="night">夜</button>
+  </div>
   <div class="progress-slider" id="progressSlider">
     <div class="progress-page">
       <div class="progress-ring" id="progressRing">
@@ -1058,6 +1121,11 @@ header h1 {
   <div class="habit-modal" role="dialog" aria-modal="true" aria-labelledby="habitModalTitle">
     <h2 class="habit-modal-title" id="habitModalTitle">習慣を追加</h2>
     <input class="habit-modal-input" id="habitModalInput" type="text" maxlength="60" />
+    <div class="habit-slot-picker" id="habitSlotPicker" aria-label="時間帯選択">
+      <button class="habit-slot-btn active" type="button" data-slot="morning">朝</button>
+      <button class="habit-slot-btn" type="button" data-slot="noon">昼</button>
+      <button class="habit-slot-btn" type="button" data-slot="night">夜</button>
+    </div>
     <div class="habit-modal-actions">
       <button class="habit-modal-btn primary" id="habitModalSave" type="button">完了</button>
       <button class="habit-modal-btn cancel" id="habitModalCancel" type="button">キャンセル</button>
@@ -1111,6 +1179,11 @@ const APP_STORAGE_KEYS = [
   RATE_HISTORY_KEY,
   DAILY_SNAPSHOT_KEY
 ];
+const TIME_SLOTS = [
+  { id: "morning", label: "朝" },
+  { id: "noon", label: "昼" },
+  { id: "night", label: "夜" }
+];
 let habits = loadHabits();
 let openedWrapper = null;
 let isEditMode = false;
@@ -1138,9 +1211,11 @@ const historyDetailListEl = document.getElementById("historyDetailList");
 const historyEmptyEl = document.getElementById("historyEmpty");
 const progressDotRingEl = document.getElementById("progressDotRing");
 const progressDotHistoryEl = document.getElementById("progressDotHistory");
+const timeSlotSwitchEl = document.getElementById("timeSlotSwitch");
 const habitModalBackdropEl = document.getElementById("habitModalBackdrop");
 const habitModalTitleEl = document.getElementById("habitModalTitle");
 const habitModalInputEl = document.getElementById("habitModalInput");
+const habitSlotPickerEl = document.getElementById("habitSlotPicker");
 const habitModalCancelEl = document.getElementById("habitModalCancel");
 const habitModalSaveEl = document.getElementById("habitModalSave");
 const confirmModalBackdropEl = document.getElementById("confirmModalBackdrop");
@@ -1178,6 +1253,10 @@ let lastTapX = 0;
 let lastTapY = 0;
 let calendarMode = "month";
 let calendarCursorDate = new Date();
+let activeTimeSlot = "morning";
+let selectedHabitSlot = "morning";
+const timeSlotButtons = Array.from(timeSlotSwitchEl.querySelectorAll(".time-slot-btn"));
+const habitSlotButtons = Array.from(habitSlotPickerEl.querySelectorAll(".habit-slot-btn"));
 
 ringValueEl.style.strokeDasharray = `${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`;
 ringValueEl.style.strokeDashoffset = `${RING_CIRCUMFERENCE}`;
@@ -1192,10 +1271,31 @@ function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
 }
 
-function openHabitModal(title, initialValue, onSave) {
+function normalizeTimeSlot(slot) {
+  return TIME_SLOTS.some(s => s.id === slot) ? slot : "morning";
+}
+
+function setSelectedHabitSlot(slot) {
+  selectedHabitSlot = normalizeTimeSlot(slot);
+  habitSlotButtons.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.slot === selectedHabitSlot);
+  });
+}
+
+function setActiveTimeSlot(slot) {
+  activeTimeSlot = normalizeTimeSlot(slot);
+  timeSlotButtons.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.slot === activeTimeSlot);
+  });
+  closeOpened();
+  render();
+}
+
+function openHabitModal(title, initialValue, onSave, initialSlot = activeTimeSlot) {
   onHabitModalSave = onSave;
   habitModalTitleEl.textContent = title;
   habitModalInputEl.value = initialValue || "";
+  setSelectedHabitSlot(initialSlot);
   habitModalBackdropEl.classList.add("show");
   habitModalBackdropEl.setAttribute("aria-hidden", "false");
   setTimeout(() => {
@@ -1218,7 +1318,7 @@ function submitHabitModal() {
   }
   const value = habitModalInputEl.value.trim();
   if (!value) return;
-  onHabitModalSave(value);
+  onHabitModalSave(value, selectedHabitSlot);
   closeHabitModal();
 }
 
@@ -1399,7 +1499,19 @@ function loadHabits() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map(item => {
+        if (!item || typeof item !== "object") return null;
+        const text = typeof item.text === "string" ? item.text.trim() : "";
+        if (!text) return null;
+        return {
+          text,
+          done: !!item.done,
+          slot: normalizeTimeSlot(item.slot)
+        };
+      })
+      .filter(Boolean);
   } catch (err) {
     console.warn("habits の読み込みに失敗したため初期化します", err);
     localStorage.removeItem(STORAGE_KEY);
@@ -1674,7 +1786,11 @@ function saveDailySnapshots(allSnapshots) {
 function buildSnapshotFromHabits(rate) {
   return {
     rate,
-    habits: habits.map(h => ({ text: h.text, done: !!h.done }))
+    habits: habits.map(h => ({
+      text: h.text,
+      done: !!h.done,
+      slot: normalizeTimeSlot(h.slot)
+    }))
   };
 }
 
@@ -1824,13 +1940,19 @@ function paintHistoryGraph(days, points, history, snapshots) {
 
   historyEmptyEl.hidden = true;
   selectedSnapshot.habits.forEach(item => {
+    const slotId = normalizeTimeSlot(item.slot);
+    const slotMeta = TIME_SLOTS.find(s => s.id === slotId) || TIME_SLOTS[0];
     const li = document.createElement("li");
     li.className = "history-detail-item";
     const dot = document.createElement("span");
     dot.className = `status-dot ${item.done ? "done" : "todo"}`;
+    const slot = document.createElement("span");
+    slot.className = "history-slot-badge";
+    slot.textContent = slotMeta.label;
     const text = document.createElement("span");
     text.textContent = item.text;
     li.appendChild(dot);
+    li.appendChild(slot);
     li.appendChild(text);
     historyDetailListEl.appendChild(li);
   });
@@ -2036,12 +2158,16 @@ function setEditMode(enabled) {
 }
 
 function updateRate() {
-  const total = habits.length;
-  const done = habits.filter(h => h.done).length;
+  const visibleHabits = habits.filter(h => normalizeTimeSlot(h.slot) === activeTimeSlot);
+  const total = visibleHabits.length;
+  const done = visibleHabits.filter(h => h.done).length;
   const rate = total === 0 ? 0 : Math.round(done / total * 100);
+  const totalAll = habits.length;
+  const doneAll = habits.filter(h => h.done).length;
+  const totalRateAll = totalAll === 0 ? 0 : Math.round(doneAll / totalAll * 100);
   const prevRate = displayedRate;
-  writeDailyRateHistory(getTodayKey(), rate);
-  writeDailySnapshot(getTodayKey(), rate);
+  writeDailyRateHistory(getTodayKey(), totalRateAll);
+  writeDailySnapshot(getTodayKey(), totalRateAll);
 
   progressPercentEl.textContent = `${rate}%`;
 
@@ -2077,7 +2203,12 @@ function render() {
   openedWrapper = null;
   let renderedCount = 0;
 
-  habits.forEach((habit, index) => {
+  const visibleHabits = habits
+    .map((habit, index) => ({ habit, index }))
+    .filter(entry => normalizeTimeSlot(entry.habit.slot) === activeTimeSlot);
+
+  visibleHabits.forEach((entry, visibleIndex) => {
+    const { habit, index } = entry;
     const wrapper = document.createElement("div");
     wrapper.className = "swipe-wrapper";
 
@@ -2109,11 +2240,12 @@ function render() {
     editItemBtn.addEventListener("click", e => {
       e.stopPropagation();
       if (!isEditMode) return;
-      openHabitModal("習慣を編集", habit.text, value => {
+      openHabitModal("習慣を編集", habit.text, (value, slot) => {
         habits[index].text = value;
+        habits[index].slot = slot;
         save();
         render();
-      });
+      }, habit.slot);
     });
 
     const checkArea = document.createElement("div");
@@ -2133,8 +2265,8 @@ function render() {
     let isDragging = false;
     let activePointerId = null;
     let dragStartY = 0;
-    let dragFromIndex = index;
-    let dragToIndex = index;
+    let dragFromIndex = visibleIndex;
+    let dragToIndex = visibleIndex;
     let dragWrapperRefs = [];
     let dragMidPoints = [];
     let dragShiftAmount = 0;
@@ -2168,7 +2300,7 @@ function render() {
         }
       }
       if (nextIndex > dragFromIndex) nextIndex -= 1;
-      return Math.max(0, Math.min(habits.length - 1, nextIndex));
+      return Math.max(0, Math.min(visibleHabits.length - 1, nextIndex));
     };
 
     item.addEventListener("touchstart", e => {
@@ -2244,8 +2376,8 @@ function render() {
       isDragging = true;
       activePointerId = e.pointerId;
       dragStartY = e.clientY;
-      dragFromIndex = index;
-      dragToIndex = index;
+      dragFromIndex = visibleIndex;
+      dragToIndex = visibleIndex;
       dragWrapperRefs = Array.from(listEl.querySelectorAll(".swipe-wrapper"));
       dragMidPoints = dragWrapperRefs.map(w => {
         const rect = w.getBoundingClientRect();
@@ -2279,7 +2411,9 @@ function render() {
       wrapper.classList.remove("drag-source");
       item.classList.remove("dragging");
       if (dragToIndex !== dragFromIndex) {
-        moveHabit(dragFromIndex, dragToIndex);
+        const fromActualIndex = visibleHabits[dragFromIndex].index;
+        const toActualIndex = visibleHabits[dragToIndex].index;
+        moveHabit(fromActualIndex, toActualIndex);
         save();
       }
       render();
@@ -2310,10 +2444,20 @@ function render() {
 }
 
 document.getElementById("addBtn").addEventListener("click", () => {
-  openHabitModal("習慣を追加", "", value => {
-    habits.push({ text: value, done: false });
+  openHabitModal("習慣を追加", "", (value, slot) => {
+    habits.push({ text: value, done: false, slot });
     save();
     render();
+  }, activeTimeSlot);
+});
+timeSlotButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    setActiveTimeSlot(btn.dataset.slot || "morning");
+  });
+});
+habitSlotButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    setSelectedHabitSlot(btn.dataset.slot || "morning");
   });
 });
 
