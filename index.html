@@ -743,6 +743,7 @@ header h1 {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  touch-action: manipulation;
 }
 
 .modal-backdrop.show .calendar-modal {
@@ -2264,6 +2265,22 @@ calendarModalBackdropEl.addEventListener("click", e => {
     closeCalendarModal();
   }
 });
+calendarModalBackdropEl.addEventListener("touchend", e => {
+  if (!calendarModalBackdropEl.classList.contains("show")) return;
+  if (!e.changedTouches || e.changedTouches.length === 0) return;
+  const touch = e.changedTouches[0];
+  const now = Date.now();
+  const dt = now - lastTapTime;
+  const dx = Math.abs(touch.clientX - lastTapX);
+  const dy = Math.abs(touch.clientY - lastTapY);
+  const isDoubleTap = dt > 0 && dt < 320 && dx < 24 && dy < 24;
+  lastTapTime = now;
+  lastTapX = touch.clientX;
+  lastTapY = touch.clientY;
+  if (isDoubleTap && e.cancelable) {
+    e.preventDefault();
+  }
+}, { passive: false });
 
 exportBtn.addEventListener("click", async () => {
   const ok = await openConfirmModal({
