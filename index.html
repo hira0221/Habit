@@ -897,6 +897,13 @@ header h1 {
   background: var(--surface-2);
 }
 
+.calendar-month-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .calendar-month-name {
   font-size: 12px;
   color: var(--muted);
@@ -912,6 +919,47 @@ header h1 {
   margin-top: 2px;
   font-size: 11px;
   color: var(--muted);
+}
+
+.calendar-month-ring {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  flex: 0 0 40px;
+}
+
+.calendar-month-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.calendar-month-ring-track {
+  fill: none;
+  stroke: #3b455b;
+  stroke-width: 3.6;
+}
+
+.calendar-month-ring-value {
+  fill: none;
+  stroke: #79c9a0;
+  stroke-width: 3.6;
+  stroke-linecap: round;
+}
+
+.calendar-month-ring-value.complete {
+  stroke: #6fb6ff;
+}
+
+.calendar-month-ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .calendar-empty {
@@ -1479,11 +1527,32 @@ function renderCalendarYear(history, snapshots) {
 
     if (count > 0) hasData = true;
     const avg = count > 0 ? Math.round(total / count) : null;
+    const ringRadius = 14;
+    const ringCircumference = 2 * Math.PI * ringRadius;
+    const ringRatio = avg === null ? 0 : Math.max(0, Math.min(1, avg / 100));
+    const ringDashOffset = ringCircumference * (1 - ringRatio);
     const card = document.createElement("div");
     card.className = "calendar-month-card";
     card.innerHTML = `
-      <div class="calendar-month-name">${monthsJa[month]}</div>
-      <div class="calendar-month-value">${avg === null ? "-" : `${avg}%`}</div>
+      <div class="calendar-month-head">
+        <div>
+          <div class="calendar-month-name">${monthsJa[month]}</div>
+          <div class="calendar-month-value">${avg === null ? "-" : `${avg}%`}</div>
+        </div>
+        <div class="calendar-month-ring">
+          <svg viewBox="0 0 40 40" aria-hidden="true">
+            <circle class="calendar-month-ring-track" cx="20" cy="20" r="${ringRadius}"></circle>
+            <circle
+              class="calendar-month-ring-value ${avg === 100 ? "complete" : ""}"
+              cx="20"
+              cy="20"
+              r="${ringRadius}"
+              stroke-dasharray="${ringCircumference} ${ringCircumference}"
+              stroke-dashoffset="${ringDashOffset}"
+            ></circle>
+          </svg>
+        </div>
+      </div>
       <div class="calendar-month-sub">記録日 ${count}日 / 100%達成 ${perfect}日</div>
     `;
     grid.appendChild(card);
