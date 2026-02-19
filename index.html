@@ -731,7 +731,7 @@ header h1 {
 
 .calendar-modal {
   width: min(100%, 420px);
-  max-height: min(80vh, 620px);
+  height: min(80vh, 620px);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -821,6 +821,8 @@ header h1 {
 }
 
 .calendar-content {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
 }
 
