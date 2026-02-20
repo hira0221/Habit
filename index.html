@@ -103,36 +103,94 @@ header h1 {
   border-color: transparent;
 }
 
-.export-btn {
+.menu-btn {
   position: absolute;
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
+  border: none;
+  background: transparent;
   color: var(--text);
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  border-radius: 10px;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  font-size: 14px;
+  font-size: 24px;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.import-btn {
-  position: absolute;
-  left: 34px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
+.header-menu {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 20, 0.34);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 60;
+}
+
+.header-menu.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.header-menu-panel {
+  width: min(80vw, 280px);
+  height: 100%;
+  padding: max(16px, env(safe-area-inset-top)) 12px 12px;
+  border-right: 1px solid var(--border);
+  background: rgba(36, 43, 56, 0.98);
+  box-shadow: 12px 0 24px rgba(0,0,0,0.28);
+  transform: translateX(-100%);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.header-menu.show .header-menu-panel {
+  transform: translateX(0);
+}
+
+.header-menu-title {
+  margin: 2px 4px 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text);
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  font-size: 14px;
-  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.header-menu-list {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-menu-item {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  border-radius: 0;
+  padding: 13px 10px;
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0;
+  display: block;
+}
+
+.header-menu-item:last-child {
+  border-bottom: none;
+}
+
+.header-menu-item:active,
+.header-menu-item:hover {
+  background: rgba(59, 69, 91, 0.42);
 }
 
 
@@ -1085,8 +1143,16 @@ header h1 {
 
 <header>
   <div class="header-top">
-    <button class="export-btn" id="exportBtn" aria-label="エクスポート">⤴</button>
-    <button class="import-btn" id="importBtn" aria-label="インポート">⤵</button>
+    <button class="menu-btn" id="menuBtn" aria-label="メニュー">☰</button>
+    <div class="header-menu" id="headerMenu" aria-hidden="true">
+      <div class="header-menu-panel">
+        <div class="header-menu-title">メニュー</div>
+        <div class="header-menu-list">
+          <button class="header-menu-item" id="menuExportBtn" type="button">エクスポート</button>
+          <button class="header-menu-item" id="menuImportBtn" type="button">インポート</button>
+        </div>
+      </div>
+    </div>
     <h1 id="date"></h1>
     <button class="edit-btn" id="editBtn">編集</button>
   </div>
@@ -1260,8 +1326,10 @@ const listEl = document.getElementById("list");
 const emptyHintEl = document.getElementById("emptyHint");
 const dateEl = document.getElementById("date");
 const streakEl = document.getElementById("streak");
-const exportBtn = document.getElementById("exportBtn");
-const importBtn = document.getElementById("importBtn");
+const menuBtn = document.getElementById("menuBtn");
+const headerMenuEl = document.getElementById("headerMenu");
+const menuExportBtn = document.getElementById("menuExportBtn");
+const menuImportBtn = document.getElementById("menuImportBtn");
 const editBtn = document.getElementById("editBtn");
 const progressSliderEl = document.getElementById("progressSlider");
 const progressRingEl = document.getElementById("progressRing");
@@ -1325,6 +1393,7 @@ let calendarCursorDate = new Date();
 let activeTimeSlot = "morning";
 let selectedHabitSlot = "morning";
 let activeHistoryScope = "all";
+let isHeaderMenuOpen = false;
 const timeSlotButtons = Array.from(timeSlotSwitchEl.querySelectorAll(".time-slot-btn"));
 const habitSlotButtons = Array.from(habitSlotPickerEl.querySelectorAll(".habit-slot-btn"));
 const historyScopeButtons = Array.from(historyScopeSwitchEl.querySelectorAll(".history-scope-btn"));
@@ -1377,6 +1446,12 @@ function setActiveTimeSlot(slot) {
   });
   closeOpened();
   render();
+}
+
+function setHeaderMenuOpen(open) {
+  isHeaderMenuOpen = !!open;
+  headerMenuEl.classList.toggle("show", isHeaderMenuOpen);
+  headerMenuEl.setAttribute("aria-hidden", isHeaderMenuOpen ? "false" : "true");
 }
 
 function openHabitModal(title, initialValue, onSave, initialSlot = activeTimeSlot) {
@@ -2684,7 +2759,12 @@ calendarModalBackdropEl.addEventListener("touchend", e => {
   }
 }, { passive: false });
 
-exportBtn.addEventListener("click", async () => {
+menuBtn.addEventListener("click", e => {
+  e.stopPropagation();
+  setHeaderMenuOpen(!isHeaderMenuOpen);
+});
+menuExportBtn.addEventListener("click", async () => {
+  setHeaderMenuOpen(false);
   const ok = await openConfirmModal({
     title: "エクスポート確認",
     message: "現在のデータをJSONでエクスポートしますか？",
@@ -2694,7 +2774,8 @@ exportBtn.addEventListener("click", async () => {
   if (!ok) return;
   exportLocalStorageAsJson();
 });
-importBtn.addEventListener("click", async () => {
+menuImportBtn.addEventListener("click", async () => {
+  setHeaderMenuOpen(false);
   const ok = await openConfirmModal({
     title: "インポート確認",
     message: "インポートするJSONファイルを選択しますか？",
@@ -2704,6 +2785,11 @@ importBtn.addEventListener("click", async () => {
   if (!ok) return;
   importFileInputEl.value = "";
   importFileInputEl.click();
+});
+headerMenuEl.addEventListener("click", e => {
+  if (e.target === headerMenuEl) {
+    setHeaderMenuOpen(false);
+  }
 });
 
 editBtn.addEventListener("click", () => {
@@ -2751,6 +2837,10 @@ confirmModalBackdropEl.addEventListener("click", e => {
   }
 });
 document.addEventListener("keydown", e => {
+  if (isHeaderMenuOpen && e.key === "Escape") {
+    setHeaderMenuOpen(false);
+    return;
+  }
   if (confirmModalBackdropEl.classList.contains("show")) {
     if (e.key === "Escape" && confirmModalConfig.allowEscapeClose) {
       closeConfirmModal(false);
