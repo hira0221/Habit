@@ -287,7 +287,7 @@ header h1 {
 }
 
 .ring-value.complete {
-  stroke: #6fb6ff;
+  stroke: #79c9a0;
 }
 
 .progress-ring.animate {
@@ -1316,6 +1316,12 @@ const HISTORY_SCOPE_COLORS = {
   noon: "#ffffff",
   night: "#6fb6ff"
 };
+const MAIN_RING_SLOT_COLORS = {
+  morning: HISTORY_SCOPE_COLORS.morning,
+  noon: HISTORY_SCOPE_COLORS.noon,
+  night: HISTORY_SCOPE_COLORS.night
+};
+const MAIN_RING_COMPLETE_COLOR = "#79c9a0";
 let habits = loadHabits();
 let openedWrapper = null;
 let isEditMode = false;
@@ -2422,6 +2428,9 @@ function updateRate() {
   const dashOffset = RING_CIRCUMFERENCE * (1 - ratio);
   ringValueEl.style.strokeDashoffset = `${dashOffset}`;
   ringValueEl.classList.toggle("complete", rate === 100);
+  ringValueEl.style.stroke = rate === 100
+    ? MAIN_RING_COMPLETE_COLOR
+    : (MAIN_RING_SLOT_COLORS[activeTimeSlot] || MAIN_RING_SLOT_COLORS.noon);
 
   if (rate > displayedRate) {
     progressRingEl.classList.remove("animate");
