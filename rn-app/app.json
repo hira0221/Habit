@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "習慣チェック",
+    "slug": "habit-check",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "plugins": [
+      "expo-router"
+    ],
+    "scheme": "habitcheck",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.habitcheck"
+    },
+    "android": {
+      "package": "com.example.habitcheck"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "replace-with-your-eas-project-id"
+      }
+    }
+  }
+}
