@@ -709,12 +709,6 @@ header h1 {
   align-items: center;
 }
 
-.dock-spacer {
-  width: 1px;
-  height: 1px;
-  justify-self: center;
-}
-
 .dock-btn {
   border: none;
   background: transparent;
@@ -751,6 +745,16 @@ header h1 {
 .calendar-dock-svg {
   width: 28px;
   height: 28px;
+  display: block;
+}
+
+.history-dock-btn {
+  transform: translateX(6px);
+}
+
+.history-dock-svg {
+  width: 26px;
+  height: 26px;
   display: block;
 }
 
@@ -1218,7 +1222,15 @@ header h1 {
 
 <div class="bottom-dock-wrap">
   <nav class="bottom-dock" aria-label="下部ナビゲーション">
-    <span class="dock-spacer" aria-hidden="true"></span>
+    <button class="dock-btn history-dock-btn" id="historyBtn" type="button" aria-label="履歴">
+      <svg class="history-dock-svg" viewBox="0 0 24 24" aria-hidden="true">
+        <polyline points="4,16.5 9,11.5 13,14.2 19.5,7.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        <circle cx="4" cy="16.5" r="1.2" fill="currentColor"></circle>
+        <circle cx="9" cy="11.5" r="1.2" fill="currentColor"></circle>
+        <circle cx="13" cy="14.2" r="1.2" fill="currentColor"></circle>
+        <circle cx="19.5" cy="7.8" r="1.2" fill="currentColor"></circle>
+      </svg>
+    </button>
     <button class="dock-btn add-btn" id="addBtn" type="button" aria-label="追加">
       +
     </button>
@@ -1367,6 +1379,7 @@ const confirmModalMessageEl = document.getElementById("confirmModalMessage");
 const confirmModalCancelEl = document.getElementById("confirmModalCancel");
 const confirmModalOkEl = document.getElementById("confirmModalOk");
 const importFileInputEl = document.getElementById("importFileInput");
+const historyBtn = document.getElementById("historyBtn");
 const calendarBtn = document.getElementById("calendarBtn");
 const calendarModalBackdropEl = document.getElementById("calendarModalBackdrop");
 const calendarCloseBtn = document.getElementById("calendarCloseBtn");
@@ -2293,6 +2306,15 @@ function isHistoryPageVisible() {
   return progressSliderEl.scrollLeft > pageWidth * 0.2;
 }
 
+function moveToProgressPage(page) {
+  const pageWidth = progressSliderEl.clientWidth || 1;
+  const targetPage = page >= 1 ? 1 : 0;
+  progressSliderEl.scrollTo({
+    left: pageWidth * targetPage,
+    behavior: "smooth"
+  });
+}
+
 function updateProgressDots() {
   const pageWidth = progressSliderEl.clientWidth || 1;
   const page = progressSliderEl.scrollLeft >= pageWidth / 2 ? 1 : 0;
@@ -2705,6 +2727,9 @@ document.getElementById("addBtn").addEventListener("click", () => {
     save();
     render();
   }, activeTimeSlot);
+});
+historyBtn.addEventListener("click", () => {
+  moveToProgressPage(isHistoryPageVisible() ? 0 : 1);
 });
 timeSlotButtons.forEach(btn => {
   btn.addEventListener("click", () => {
