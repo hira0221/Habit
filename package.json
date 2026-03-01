@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "cap:prepare": "powershell -ExecutionPolicy Bypass -File ./scripts/sync-web.ps1",
+    "cap:sync:android": "npm run cap:prepare && npx cap sync android",
+    "cap:open:android": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.1.0",
+    "@capacitor/cli": "^8.1.0",
+    "@capacitor/core": "^8.1.0",
+    "@capacitor/local-notifications": "^8.0.0"
+  }
+}
