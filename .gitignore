@@ -1,0 +1,11 @@
+node_modules/
+
+# PWAでは index.html を正本にする。web/ は Capacitor 向け生成物。
+web/
+
+# 今回はPWA公開を優先するため非対象をいったん除外
+android/
+rn-app/
+
+# IDE
+.idea/

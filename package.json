@@ -1,5 +1,7 @@
 {
   "scripts": {
+    "pwa:serve": "npx serve . -l 4173",
+    "pwa:publish-check": "powershell -ExecutionPolicy Bypass -File ./scripts/pwa-preflight.ps1",
     "cap:prepare": "powershell -ExecutionPolicy Bypass -File ./scripts/sync-web.ps1",
     "cap:sync:android": "npm run cap:prepare && npx cap sync android",
     "cap:open:android": "npx cap open android"
