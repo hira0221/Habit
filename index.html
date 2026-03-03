@@ -900,6 +900,88 @@ header h1 {
   right: 0;
 }
 
+.settings-modal {
+  width: min(100%, 420px);
+  max-height: min(86vh, 680px);
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.35);
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+}
+
+.modal-backdrop.show .settings-modal {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.settings-section {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.settings-section + .settings-section {
+  margin-top: 10px;
+}
+
+.settings-section-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.settings-field {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.settings-field label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.settings-select,
+.settings-time {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #101725;
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.settings-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.settings-switch label {
+  font-size: 13px;
+}
+
+.settings-switch input {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-note {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
 .calendar-modal {
   width: min(100%, 420px);
   height: min(80vh, 620px);
@@ -1152,9 +1234,9 @@ header h1 {
       <div class="header-menu-panel">
         <div class="header-menu-title">メニュー</div>
         <div class="header-menu-list">
+          <button class="header-menu-item" id="menuAppSettingsBtn" type="button">アプリ設定</button>
           <button class="header-menu-item" id="menuExportBtn" type="button">エクスポート</button>
           <button class="header-menu-item" id="menuImportBtn" type="button">インポート</button>
-          <button class="header-menu-item" id="menuNotificationBtn" type="button">通知設定</button>
         </div>
       </div>
     </div>
@@ -1301,6 +1383,52 @@ header h1 {
   </div>
 </div>
 
+<div class="modal-backdrop" id="settingsModalBackdrop" aria-hidden="true">
+  <div class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+    <h2 class="habit-modal-title" id="settingsModalTitle">アプリ設定</h2>
+    <div class="settings-section">
+      <p class="settings-section-title">表示</p>
+      <div class="settings-field">
+        <label for="settingsHistoryScope">履歴の初期表示</label>
+        <select class="settings-select" id="settingsHistoryScope">
+          <option value="all">全体</option>
+          <option value="morning">朝</option>
+          <option value="noon">昼</option>
+          <option value="night">夜</option>
+        </select>
+      </div>
+      <div class="settings-switch">
+        <label for="settingsConfirmDelete">習慣削除前に確認する</label>
+        <input id="settingsConfirmDelete" type="checkbox" />
+      </div>
+    </div>
+    <div class="settings-section">
+      <p class="settings-section-title">通知</p>
+      <div class="settings-switch">
+        <label for="settingsNotificationEnabled">習慣リマインド通知を有効化</label>
+        <input id="settingsNotificationEnabled" type="checkbox" />
+      </div>
+      <div class="settings-field">
+        <label for="settingsNotifyMorning">朝の通知時刻</label>
+        <input class="settings-time" id="settingsNotifyMorning" type="time" />
+      </div>
+      <div class="settings-field">
+        <label for="settingsNotifyNoon">昼の通知時刻</label>
+        <input class="settings-time" id="settingsNotifyNoon" type="time" />
+      </div>
+      <div class="settings-field">
+        <label for="settingsNotifyNight">夜の通知時刻</label>
+        <input class="settings-time" id="settingsNotifyNight" type="time" />
+      </div>
+      <div class="settings-note" id="settingsNotificationNote"></div>
+    </div>
+    <div class="habit-modal-actions">
+      <button class="habit-modal-btn primary" id="settingsModalSave" type="button">保存</button>
+      <button class="habit-modal-btn cancel" id="settingsModalCancel" type="button">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <script>
 
 const DATE_KEY = "lastOpenedDate";
@@ -1309,7 +1437,12 @@ const STREAK_COUNT_KEY = "streakCount";
 const STREAK_LAST_DATE_KEY = "streakLastDate";
 const RATE_HISTORY_KEY = "rateHistoryByDate";
 const DAILY_SNAPSHOT_KEY = "dailySnapshotByDate";
+const APP_SETTINGS_KEY = "appSettings";
 const NOTIFICATION_SETTINGS_KEY = "notificationSettings";
+const DEFAULT_APP_SETTINGS = {
+  defaultHistoryScope: "all",
+  confirmBeforeDelete: true
+};
 const DEFAULT_NOTIFICATION_SETTINGS = {
   enabled: false,
   morning: "08:00",
@@ -1322,7 +1455,9 @@ const APP_STORAGE_KEYS = [
   STREAK_COUNT_KEY,
   STREAK_LAST_DATE_KEY,
   RATE_HISTORY_KEY,
-  DAILY_SNAPSHOT_KEY
+  DAILY_SNAPSHOT_KEY,
+  APP_SETTINGS_KEY,
+  NOTIFICATION_SETTINGS_KEY
 ];
 const TIME_SLOTS = [
   { id: "morning", label: "朝" },
@@ -1354,9 +1489,9 @@ const dateEl = document.getElementById("date");
 const streakEl = document.getElementById("streak");
 const menuBtn = document.getElementById("menuBtn");
 const headerMenuEl = document.getElementById("headerMenu");
+const menuAppSettingsBtn = document.getElementById("menuAppSettingsBtn");
 const menuExportBtn = document.getElementById("menuExportBtn");
 const menuImportBtn = document.getElementById("menuImportBtn");
-const menuNotificationBtn = document.getElementById("menuNotificationBtn");
 const editBtn = document.getElementById("editBtn");
 const progressSliderEl = document.getElementById("progressSlider");
 const progressRingEl = document.getElementById("progressRing");
@@ -1398,6 +1533,16 @@ const calendarPrevBtn = document.getElementById("calendarPrevBtn");
 const calendarNextBtn = document.getElementById("calendarNextBtn");
 const calendarPeriodLabelEl = document.getElementById("calendarPeriodLabel");
 const calendarContentEl = document.getElementById("calendarContent");
+const settingsModalBackdropEl = document.getElementById("settingsModalBackdrop");
+const settingsHistoryScopeEl = document.getElementById("settingsHistoryScope");
+const settingsConfirmDeleteEl = document.getElementById("settingsConfirmDelete");
+const settingsNotificationEnabledEl = document.getElementById("settingsNotificationEnabled");
+const settingsNotifyMorningEl = document.getElementById("settingsNotifyMorning");
+const settingsNotifyNoonEl = document.getElementById("settingsNotifyNoon");
+const settingsNotifyNightEl = document.getElementById("settingsNotifyNight");
+const settingsNotificationNoteEl = document.getElementById("settingsNotificationNote");
+const settingsModalSaveEl = document.getElementById("settingsModalSave");
+const settingsModalCancelEl = document.getElementById("settingsModalCancel");
 
 const RING_RADIUS = 52;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -1422,6 +1567,8 @@ let activeTimeSlot = "morning";
 let selectedHabitSlot = "morning";
 let activeHistoryScope = "all";
 let isHeaderMenuOpen = false;
+let appSettings = { ...DEFAULT_APP_SETTINGS };
+let isSettingsModalOpen = false;
 const timeSlotButtons = Array.from(timeSlotSwitchEl.querySelectorAll(".time-slot-btn"));
 const habitSlotButtons = Array.from(habitSlotPickerEl.querySelectorAll(".habit-slot-btn"));
 const historyScopeButtons = Array.from(historyScopeSwitchEl.querySelectorAll(".history-scope-btn"));
@@ -1468,12 +1615,31 @@ function setSelectedHabitSlot(slot) {
 }
 
 function setActiveTimeSlot(slot) {
-  activeTimeSlot = normalizeTimeSlot(slot);
+  const nextSlot = normalizeTimeSlot(slot);
+  if (activeTimeSlot === nextSlot) return;
+  activeTimeSlot = nextSlot;
   timeSlotButtons.forEach(btn => {
     btn.classList.toggle("active", btn.dataset.slot === activeTimeSlot);
   });
   closeOpened();
   render();
+}
+
+function setActiveHistoryScope(scope, options = {}) {
+  const { animate = true } = options;
+  const nextScope = normalizeHistoryScope(scope);
+  if (activeHistoryScope === nextScope) return;
+  activeHistoryScope = nextScope;
+  historyScopeButtons.forEach(b => {
+    b.classList.toggle("active", (b.dataset.scope || "all") === activeHistoryScope);
+  });
+  if (isHistoryPageVisible()) {
+    if (animate) {
+      animateHistoryGraphTransition();
+    } else {
+      renderHistoryGraph();
+    }
+  }
 }
 
 function setHeaderMenuOpen(open) {
@@ -1685,6 +1851,65 @@ async function handleImportPayload(payload) {
   }
 }
 
+function loadAppSettings() {
+  try {
+    const raw = localStorage.getItem(APP_SETTINGS_KEY);
+    if (!raw) return { ...DEFAULT_APP_SETTINGS };
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return { ...DEFAULT_APP_SETTINGS };
+    return {
+      defaultHistoryScope: normalizeHistoryScope(parsed.defaultHistoryScope),
+      confirmBeforeDelete: parsed.confirmBeforeDelete !== false
+    };
+  } catch {
+    return { ...DEFAULT_APP_SETTINGS };
+  }
+}
+
+function saveAppSettings(settings) {
+  localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function setNotificationTimeInputsEnabled(enabled) {
+  const disabled = !enabled;
+  settingsNotifyMorningEl.disabled = disabled;
+  settingsNotifyNoonEl.disabled = disabled;
+  settingsNotifyNightEl.disabled = disabled;
+}
+
+function openAppSettings() {
+  const currentApp = loadAppSettings();
+  const currentNotification = loadNotificationSettings();
+  const runtime = getNotificationRuntime();
+
+  settingsHistoryScopeEl.value = normalizeHistoryScope(currentApp.defaultHistoryScope);
+  settingsConfirmDeleteEl.checked = currentApp.confirmBeforeDelete !== false;
+  settingsNotificationEnabledEl.checked = !!currentNotification.enabled;
+  settingsNotifyMorningEl.value = currentNotification.morning;
+  settingsNotifyNoonEl.value = currentNotification.noon;
+  settingsNotifyNightEl.value = currentNotification.night;
+
+  if (runtime === "unsupported") {
+    settingsNotificationEnabledEl.checked = false;
+    settingsNotificationEnabledEl.disabled = true;
+    setNotificationTimeInputsEnabled(false);
+    settingsNotificationNoteEl.textContent = "この環境では通知APIが利用できません。";
+  } else {
+    settingsNotificationEnabledEl.disabled = false;
+    setNotificationTimeInputsEnabled(settingsNotificationEnabledEl.checked);
+    settingsNotificationNoteEl.textContent = runtime === "web"
+      ? "ブラウザでは通知許可が必要です。"
+      : "インストール版アプリでは毎日通知を予約します。";
+  }
+
+  isSettingsModalOpen = true;
+  settingsModalBackdropEl.classList.add("show");
+  settingsModalBackdropEl.setAttribute("aria-hidden", "false");
+  setTimeout(() => {
+    settingsHistoryScopeEl.focus();
+  }, 0);
+}
+
 function loadNotificationSettings() {
   try {
     const raw = localStorage.getItem(NOTIFICATION_SETTINGS_KEY);
@@ -1733,6 +1958,84 @@ function getCapacitorLocalNotificationsPlugin() {
   }
   const plugin = cap.Plugins && cap.Plugins.LocalNotifications;
   return plugin || null;
+}
+
+function hasWebNotificationApi() {
+  return typeof window !== "undefined" && "Notification" in window;
+}
+
+function getNotificationRuntime() {
+  const plugin = getCapacitorLocalNotificationsPlugin();
+  if (plugin) return "capacitor";
+  return hasWebNotificationApi() ? "web" : "unsupported";
+}
+
+async function requestWebNotificationPermission() {
+  if (!hasWebNotificationApi()) return "unsupported";
+  if (Notification.permission === "granted") return "granted";
+  const result = await Notification.requestPermission();
+  return result;
+}
+
+function sendWebTestNotification() {
+  if (!hasWebNotificationApi() || Notification.permission !== "granted") return;
+  new Notification("習慣チェック", {
+    body: "通知テストです。設定は保存されました。"
+  });
+}
+
+function closeAppSettingsModal() {
+  isSettingsModalOpen = false;
+  settingsModalBackdropEl.classList.remove("show");
+  settingsModalBackdropEl.setAttribute("aria-hidden", "true");
+}
+
+async function saveAppSettingsFromModal() {
+  const currentApp = loadAppSettings();
+  const currentNotification = loadNotificationSettings();
+  const runtime = getNotificationRuntime();
+
+  const nextApp = {
+    defaultHistoryScope: normalizeHistoryScope(settingsHistoryScopeEl.value || currentApp.defaultHistoryScope),
+    confirmBeforeDelete: settingsConfirmDeleteEl.checked
+  };
+  appSettings = nextApp;
+  saveAppSettings(nextApp);
+  setActiveHistoryScope(nextApp.defaultHistoryScope, { animate: false });
+
+  const nextNotification = {
+    enabled: runtime !== "unsupported" ? !!settingsNotificationEnabledEl.checked : false,
+    morning: normalizeNotificationTime(settingsNotifyMorningEl.value, currentNotification.morning),
+    noon: normalizeNotificationTime(settingsNotifyNoonEl.value, currentNotification.noon),
+    night: normalizeNotificationTime(settingsNotifyNightEl.value, currentNotification.night)
+  };
+  saveNotificationSettings(nextNotification);
+
+  let notificationMessage = `通知: ${nextNotification.enabled ? "ON" : "OFF"}`;
+  if (runtime === "capacitor") {
+    await scheduleHabitNotifications(nextNotification);
+    if (nextNotification.enabled) {
+      notificationMessage = `通知: ON（朝 ${nextNotification.morning} / 昼 ${nextNotification.noon} / 夜 ${nextNotification.night}）`;
+    }
+  } else if (runtime === "web" && nextNotification.enabled) {
+    const permission = await requestWebNotificationPermission();
+    if (permission === "granted") {
+      sendWebTestNotification();
+      notificationMessage = `通知: ON（朝 ${nextNotification.morning} / 昼 ${nextNotification.noon} / 夜 ${nextNotification.night}）`;
+    } else {
+      notificationMessage = "通知: 保存済み（ブラウザ通知の許可が必要です）";
+    }
+  } else if (runtime === "unsupported") {
+    notificationMessage = "通知: この環境では利用できません";
+  }
+
+  closeAppSettingsModal();
+  await openConfirmModal({
+    title: "アプリ設定",
+    message: `保存しました。\n履歴表示: ${nextApp.defaultHistoryScope}\n削除前確認: ${nextApp.confirmBeforeDelete ? "ON" : "OFF"}\n${notificationMessage}`,
+    okText: "OK",
+    showCancel: false
+  });
 }
 
 async function cancelAllHabitNotifications() {
@@ -1786,49 +2089,8 @@ async function scheduleHabitNotifications(settings) {
   });
 }
 
-async function openNotificationSettings() {
-  const current = loadNotificationSettings();
-  const plugin = getCapacitorLocalNotificationsPlugin();
-  if (!plugin) {
-    alert("通知設定はインストール版アプリ（Android/iOS）で利用できます。");
-    return;
-  }
-
-  const enabled = confirm(`習慣リマインド通知を有効化しますか？\n現在: ${current.enabled ? "ON" : "OFF"}`);
-  if (!enabled) {
-    const disabledSettings = { ...current, enabled: false };
-    saveNotificationSettings(disabledSettings);
-    await scheduleHabitNotifications(disabledSettings);
-    await openConfirmModal({
-      title: "通知設定",
-      message: "通知をOFFにしました。",
-      okText: "OK",
-      showCancel: false
-    });
-    return;
-  }
-
-  const morning = prompt("朝の通知時刻（HH:MM）", current.morning);
-  if (morning === null) return;
-  const noon = prompt("昼の通知時刻（HH:MM）", current.noon);
-  if (noon === null) return;
-  const night = prompt("夜の通知時刻（HH:MM）", current.night);
-  if (night === null) return;
-
-  const nextSettings = {
-    enabled: true,
-    morning: normalizeNotificationTime(morning, current.morning),
-    noon: normalizeNotificationTime(noon, current.noon),
-    night: normalizeNotificationTime(night, current.night)
-  };
-  saveNotificationSettings(nextSettings);
-  await scheduleHabitNotifications(nextSettings);
-  await openConfirmModal({
-    title: "通知設定",
-    message: `通知をONにしました。\n朝 ${nextSettings.morning} / 昼 ${nextSettings.noon} / 夜 ${nextSettings.night}`,
-    okText: "OK",
-    showCancel: false
-  });
+function openNotificationSettings() {
+  openAppSettings();
 }
 
 async function syncNotificationScheduleOnLaunch() {
@@ -2657,8 +2919,17 @@ function render() {
     const deleteArea = document.createElement("div");
     deleteArea.className = "delete-area";
     deleteArea.textContent = "削除";
-    deleteArea.addEventListener("click", () => {
+    deleteArea.addEventListener("click", async () => {
       if (!isEditMode) return;
+      if (appSettings.confirmBeforeDelete) {
+        const ok = await openConfirmModal({
+          title: "削除確認",
+          message: "この習慣を削除しますか？",
+          okText: "削除",
+          cancelText: "キャンセル"
+        });
+        if (!ok) return;
+      }
       habits.splice(index, 1);
       save();
       render();
@@ -2908,16 +3179,7 @@ habitSlotButtons.forEach(btn => {
 historyScopeButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     const nextScope = normalizeHistoryScope(btn.dataset.scope || "all");
-    if (activeHistoryScope === nextScope) return;
-    activeHistoryScope = nextScope;
-    historyScopeButtons.forEach(b => {
-      b.classList.toggle("active", (b.dataset.scope || "all") === activeHistoryScope);
-    });
-    if (isHistoryPageVisible()) {
-      animateHistoryGraphTransition();
-    } else {
-      renderHistoryGraph();
-    }
+    setActiveHistoryScope(nextScope, { animate: true });
   });
 });
 
@@ -2984,9 +3246,9 @@ menuImportBtn.addEventListener("click", async () => {
   importFileInputEl.value = "";
   importFileInputEl.click();
 });
-menuNotificationBtn.addEventListener("click", async () => {
+menuAppSettingsBtn.addEventListener("click", () => {
   setHeaderMenuOpen(false);
-  await openNotificationSettings();
+  openAppSettings();
 });
 headerMenuEl.addEventListener("click", e => {
   if (e.target === headerMenuEl) {
@@ -3015,6 +3277,18 @@ habitModalInputEl.addEventListener("keydown", e => {
     closeHabitModal();
   }
 });
+settingsNotificationEnabledEl.addEventListener("change", () => {
+  setNotificationTimeInputsEnabled(settingsNotificationEnabledEl.checked);
+});
+settingsModalCancelEl.addEventListener("click", closeAppSettingsModal);
+settingsModalSaveEl.addEventListener("click", async () => {
+  await saveAppSettingsFromModal();
+});
+settingsModalBackdropEl.addEventListener("click", e => {
+  if (e.target === settingsModalBackdropEl) {
+    closeAppSettingsModal();
+  }
+});
 
 importFileInputEl.addEventListener("change", async e => {
   const target = e.target;
@@ -3041,6 +3315,10 @@ confirmModalBackdropEl.addEventListener("click", e => {
 document.addEventListener("keydown", e => {
   if (isHeaderMenuOpen && e.key === "Escape") {
     setHeaderMenuOpen(false);
+    return;
+  }
+  if (isSettingsModalOpen && e.key === "Escape") {
+    closeAppSettingsModal();
     return;
   }
   if (confirmModalBackdropEl.classList.contains("show")) {
@@ -3073,6 +3351,10 @@ setInterval(() => {
 if (!isEditMode) {
   setEditMode(false);
 }
+
+appSettings = loadAppSettings();
+setActiveHistoryScope(appSettings.defaultHistoryScope, { animate: false });
+setActiveTimeSlot("morning");
 
 render();
 updateProgressDots();
