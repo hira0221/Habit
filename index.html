@@ -1439,6 +1439,7 @@ const RATE_HISTORY_KEY = "rateHistoryByDate";
 const DAILY_SNAPSHOT_KEY = "dailySnapshotByDate";
 const APP_SETTINGS_KEY = "appSettings";
 const NOTIFICATION_SETTINGS_KEY = "notificationSettings";
+const PUSH_CLIENT_ID_KEY = "pushClientId";
 const DEFAULT_APP_SETTINGS = {
   defaultHistoryScope: "all",
   confirmBeforeDelete: true
@@ -1569,6 +1570,7 @@ let activeHistoryScope = "all";
 let isHeaderMenuOpen = false;
 let appSettings = { ...DEFAULT_APP_SETTINGS };
 let isSettingsModalOpen = false;
+let serviceWorkerRegistrationPromise = null;
 const timeSlotButtons = Array.from(timeSlotSwitchEl.querySelectorAll(".time-slot-btn"));
 const habitSlotButtons = Array.from(habitSlotPickerEl.querySelectorAll(".habit-slot-btn"));
 const historyScopeButtons = Array.from(historyScopeSwitchEl.querySelectorAll(".history-scope-btn"));
@@ -1898,7 +1900,9 @@ function openAppSettings() {
     settingsNotificationEnabledEl.disabled = false;
     setNotificationTimeInputsEnabled(settingsNotificationEnabledEl.checked);
     settingsNotificationNoteEl.textContent = runtime === "web"
-      ? "ブラウザでは通知許可が必要です。"
+      ? (isWebPushSupported()
+        ? "ブラウザ通知許可 + Pushサーバー連携で定時通知します。"
+        : "このブラウザはWeb Push未対応です（通知テストのみ）。")
       : "インストール版アプリでは毎日通知を予約します。";
   }
 
@@ -1984,6 +1988,124 @@ function sendWebTestNotification() {
   });
 }
 
+function isWebPushSupported() {
+  return typeof window !== "undefined"
+    && window.isSecureContext
+    && "serviceWorker" in navigator
+    && "PushManager" in window;
+}
+
+function getPushClientId() {
+  let clientId = localStorage.getItem(PUSH_CLIENT_ID_KEY) || "";
+  if (!clientId && typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    clientId = crypto.randomUUID();
+    localStorage.setItem(PUSH_CLIENT_ID_KEY, clientId);
+  }
+  return clientId;
+}
+
+function base64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i += 1) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+function ensureServiceWorkerRegistration() {
+  if (!("serviceWorker" in navigator)) {
+    return Promise.reject(new Error("Service Worker が利用できません。"));
+  }
+  if (serviceWorkerRegistrationPromise) return serviceWorkerRegistrationPromise;
+  serviceWorkerRegistrationPromise = navigator.serviceWorker.register("./service-worker.js");
+  return serviceWorkerRegistrationPromise;
+}
+
+async function fetchPushPublicKey() {
+  const res = await fetch("/api/push/public-key");
+  if (!res.ok) {
+    throw new Error("Push公開鍵の取得に失敗しました。サーバー設定を確認してください。");
+  }
+  const payload = await res.json();
+  if (!payload || typeof payload.publicKey !== "string" || !payload.publicKey) {
+    throw new Error("Push公開鍵の形式が不正です。");
+  }
+  return payload.publicKey;
+}
+
+async function postPushJson(url, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    let message = `${res.status} ${res.statusText}`;
+    try {
+      const data = await res.json();
+      if (data && typeof data.error === "string" && data.error) {
+        message = data.error;
+      }
+    } catch {
+      // ignore json parse failure
+    }
+    throw new Error(message);
+  }
+  return res.json().catch(() => ({}));
+}
+
+async function upsertWebPushSubscription(settings) {
+  if (!isWebPushSupported()) {
+    throw new Error("このブラウザはWeb Pushに対応していません。");
+  }
+  const registration = await ensureServiceWorkerRegistration();
+  const publicKey = await fetchPushPublicKey();
+  const keyBytes = base64ToUint8Array(publicKey);
+  let subscription = await registration.pushManager.getSubscription();
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: keyBytes
+    });
+  }
+  const clientId = getPushClientId();
+  if (!clientId) {
+    throw new Error("clientId を生成できませんでした。");
+  }
+  await postPushJson("/api/push/subscribe", {
+    clientId,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tokyo",
+    settings,
+    subscription: subscription.toJSON()
+  });
+}
+
+async function removeWebPushSubscription() {
+  if (!isWebPushSupported()) return;
+  const registration = await ensureServiceWorkerRegistration();
+  const subscription = await registration.pushManager.getSubscription();
+  if (subscription) {
+    await subscription.unsubscribe();
+  }
+  const clientId = localStorage.getItem(PUSH_CLIENT_ID_KEY) || "";
+  if (clientId) {
+    try {
+      await postPushJson("/api/push/unsubscribe", { clientId });
+    } catch (err) {
+      console.warn("購読解除の同期に失敗しました", err);
+    }
+  }
+}
+
+async function sendServerPushTest() {
+  const clientId = localStorage.getItem(PUSH_CLIENT_ID_KEY) || "";
+  if (!clientId) return;
+  await postPushJson("/api/push/test", { clientId });
+}
+
 function closeAppSettingsModal() {
   isSettingsModalOpen = false;
   settingsModalBackdropEl.classList.remove("show");
@@ -2017,13 +2139,25 @@ async function saveAppSettingsFromModal() {
     if (nextNotification.enabled) {
       notificationMessage = `通知: ON（朝 ${nextNotification.morning} / 昼 ${nextNotification.noon} / 夜 ${nextNotification.night}）`;
     }
-  } else if (runtime === "web" && nextNotification.enabled) {
-    const permission = await requestWebNotificationPermission();
-    if (permission === "granted") {
-      sendWebTestNotification();
-      notificationMessage = `通知: ON（朝 ${nextNotification.morning} / 昼 ${nextNotification.noon} / 夜 ${nextNotification.night}）`;
+  } else if (runtime === "web") {
+    if (!nextNotification.enabled) {
+      await removeWebPushSubscription();
     } else {
-      notificationMessage = "通知: 保存済み（ブラウザ通知の許可が必要です）";
+      const permission = await requestWebNotificationPermission();
+      if (permission !== "granted") {
+        notificationMessage = "通知: 保存済み（ブラウザ通知の許可が必要です）";
+      } else if (isWebPushSupported()) {
+        try {
+          await upsertWebPushSubscription(nextNotification);
+          await sendServerPushTest();
+          notificationMessage = `通知: ON（サーバー連携済み / 朝 ${nextNotification.morning} / 昼 ${nextNotification.noon} / 夜 ${nextNotification.night}）`;
+        } catch (err) {
+          notificationMessage = `通知: 保存済み（Push連携エラー: ${err instanceof Error ? err.message : "unknown"}）`;
+        }
+      } else {
+        sendWebTestNotification();
+        notificationMessage = `通知: ON（テスト通知のみ。Web Push非対応）`;
+      }
     }
   } else if (runtime === "unsupported") {
     notificationMessage = "通知: この環境では利用できません";
@@ -2096,7 +2230,20 @@ function openNotificationSettings() {
 async function syncNotificationScheduleOnLaunch() {
   try {
     const settings = loadNotificationSettings();
-    await scheduleHabitNotifications(settings);
+    const runtime = getNotificationRuntime();
+    if (runtime === "capacitor") {
+      await scheduleHabitNotifications(settings);
+      return;
+    }
+    if (runtime === "web" && settings.enabled && hasWebNotificationApi() && Notification.permission === "granted") {
+      if (isWebPushSupported()) {
+        try {
+          await upsertWebPushSubscription(settings);
+        } catch (err) {
+          console.warn("Web Push購読の同期に失敗しました", err);
+        }
+      }
+    }
   } catch (err) {
     console.warn("通知スケジュールの同期に失敗しました", err);
   }
@@ -3362,7 +3509,7 @@ void syncNotificationScheduleOnLaunch();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js").catch(err => {
+    ensureServiceWorkerRegistration().catch(err => {
       console.warn("Service Worker registration failed:", err);
     });
   });

@@ -9,3 +9,7 @@ rn-app/
 
 # IDE
 .idea/
+
+# Local push server secrets/data
+.env
+data/push-subscriptions.json
