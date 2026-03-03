@@ -5,12 +5,12 @@ const express = require("express");
 const webpush = require("web-push");
 
 const app = express();
-const PORT = Number(process.env.PORT || 4173);
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const SUBSCRIPTIONS_FILE = path.join(DATA_DIR, "push-subscriptions.json");
 
 loadDotEnv(path.join(ROOT_DIR, ".env"));
+const PORT = Number(process.env.PORT || 4173);
 
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "";
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
@@ -215,6 +215,10 @@ function currentDateKeyInTimezone(timezone) {
 function numPart(parts, type) {
   const found = parts.find(p => p.type === type);
   return Number(found ? found.value : "0");
+}
+
+function pad2(value) {
+  return String(value).padStart(2, "0");
 }
 
 function ensureClientId(input) {
