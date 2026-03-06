@@ -1,0 +1,19 @@
+{
+  "name": "習慣チェック",
+  "short_name": "習慣チェック",
+  "description": "毎日の習慣をチェックして記録するアプリ",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1b202b",
+  "theme_color": "#1b202b",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "icons/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
