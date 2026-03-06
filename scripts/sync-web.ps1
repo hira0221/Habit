@@ -20,6 +20,11 @@ if (Test-Path $icon192Src) {
   Copy-Item -Path $icon192Src -Destination (Join-Path $webDir "icons\icon-192.png") -Force
 }
 
+$appleTouchIconSrc = Join-Path $root "icons\apple-touch-icon.png"
+if (Test-Path $appleTouchIconSrc) {
+  Copy-Item -Path $appleTouchIconSrc -Destination (Join-Path $webDir "icons\apple-touch-icon.png") -Force
+}
+
 $icon512Src = Join-Path $root "icons\icon-512.png"
 if (Test-Path $icon512Src) {
   Copy-Item -Path $icon512Src -Destination (Join-Path $webDir "icons\icon-512.png") -Force
