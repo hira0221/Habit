@@ -10,6 +10,16 @@ Copy-Item -Path (Join-Path $root "index.html") -Destination (Join-Path $webDir "
 Copy-Item -Path (Join-Path $root "manifest.webmanifest") -Destination (Join-Path $webDir "manifest.webmanifest") -Force
 Copy-Item -Path (Join-Path $root "service-worker.js") -Destination (Join-Path $webDir "service-worker.js") -Force
 
+$rootAppleTouchIcon = Join-Path $root "apple-touch-icon.png"
+if (Test-Path $rootAppleTouchIcon) {
+  Copy-Item -Path $rootAppleTouchIcon -Destination (Join-Path $webDir "apple-touch-icon.png") -Force
+}
+
+$rootAppleTouchIconVersioned = Join-Path $root "apple-touch-icon-20260306.png"
+if (Test-Path $rootAppleTouchIconVersioned) {
+  Copy-Item -Path $rootAppleTouchIconVersioned -Destination (Join-Path $webDir "apple-touch-icon-20260306.png") -Force
+}
+
 $iconSrc = Join-Path $root "icons\app-icon.svg"
 if (Test-Path $iconSrc) {
   Copy-Item -Path $iconSrc -Destination (Join-Path $webDir "icons\app-icon.svg") -Force
