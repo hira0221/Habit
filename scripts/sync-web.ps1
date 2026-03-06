@@ -15,4 +15,14 @@ if (Test-Path $iconSrc) {
   Copy-Item -Path $iconSrc -Destination (Join-Path $webDir "icons\app-icon.svg") -Force
 }
 
+$icon192Src = Join-Path $root "icons\icon-192.png"
+if (Test-Path $icon192Src) {
+  Copy-Item -Path $icon192Src -Destination (Join-Path $webDir "icons\icon-192.png") -Force
+}
+
+$icon512Src = Join-Path $root "icons\icon-512.png"
+if (Test-Path $icon512Src) {
+  Copy-Item -Path $icon512Src -Destination (Join-Path $webDir "icons\icon-512.png") -Force
+}
+
 Write-Host "Prepared Capacitor web assets in: $webDir"

@@ -43,4 +43,31 @@ if ($failed.Count -gt 0) {
   Write-Error ("manifest.webmanifest is missing fields: " + ($failed -join ", "))
 }
 
+$missingIconFiles = @()
+foreach ($icon in $manifest.icons) {
+  if ($null -eq $icon -or [string]::IsNullOrWhiteSpace($icon.src)) {
+    continue
+  }
+  $iconPath = Join-Path $root $icon.src
+  if (-not (Test-Path $iconPath)) {
+    $missingIconFiles += $icon.src
+  }
+}
+
+if ($missingIconFiles.Count -gt 0) {
+  Write-Error ("manifest icon files are missing: " + ($missingIconFiles -join ", "))
+}
+
+$has192Png = $false
+$has512Png = $false
+foreach ($icon in $manifest.icons) {
+  if ($null -eq $icon) { continue }
+  if ($icon.sizes -eq "192x192" -and $icon.type -eq "image/png") { $has192Png = $true }
+  if ($icon.sizes -eq "512x512" -and $icon.type -eq "image/png") { $has512Png = $true }
+}
+
+if (-not $has192Png -or -not $has512Png) {
+  Write-Error "manifest.webmanifest must include PNG icons for 192x192 and 512x512."
+}
+
 Write-Host "PWA preflight passed." -ForegroundColor Green
