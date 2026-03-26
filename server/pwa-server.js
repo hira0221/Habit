@@ -109,6 +109,11 @@ app.post("/api/push/test", async (req, res) => {
     });
     res.json({ ok: true });
   } catch (err) {
+    const status = err && err.statusCode;
+    if (status === 404 || status === 410) {
+      store.subscriptions = store.subscriptions.filter(s => s.clientId !== clientId);
+      saveStore(store);
+    }
     res.status(500).json({ error: errorMessage(err) });
   }
 });
@@ -301,7 +306,19 @@ function ensureStoreFile() {
 function errorMessage(err) {
   if (!err) return "unknown error";
   if (typeof err === "string") return err;
-  if (err.message) return err.message;
+  const parts = [];
+  if (err.statusCode) {
+    parts.push(`status ${err.statusCode}`);
+  }
+  if (typeof err.body === "string" && err.body.trim()) {
+    parts.push(err.body.trim());
+  }
+  if (err.message) {
+    parts.push(err.message);
+  }
+  if (parts.length > 0) {
+    return parts.join(" / ");
+  }
   return JSON.stringify(err);
 }
 

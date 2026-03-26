@@ -2058,7 +2058,7 @@ async function postPushJson(url, body) {
   return res.json().catch(() => ({}));
 }
 
-async function upsertWebPushSubscription(settings) {
+async function upsertWebPushSubscription(settings, options = {}) {
   if (!isWebPushSupported()) {
     throw new Error("このブラウザはWeb Pushに対応していません。");
   }
@@ -2066,6 +2066,10 @@ async function upsertWebPushSubscription(settings) {
   const publicKey = await fetchPushPublicKey();
   const keyBytes = base64ToUint8Array(publicKey);
   let subscription = await registration.pushManager.getSubscription();
+  if (subscription && options.forceResubscribe) {
+    await subscription.unsubscribe().catch(() => {});
+    subscription = null;
+  }
   if (!subscription) {
     subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
@@ -2082,6 +2086,32 @@ async function upsertWebPushSubscription(settings) {
     settings,
     subscription: subscription.toJSON()
   });
+}
+
+function shouldRetryWebPushRegistration(err) {
+  if (!(err instanceof Error)) return false;
+  const message = (err.message || "").toLowerCase();
+  return message.includes("subscription not found")
+    || message.includes("410")
+    || message.includes("404")
+    || message.includes("403")
+    || message.includes("401")
+    || message.includes("unauthorized")
+    || message.includes("forbidden")
+    || message.includes("mismatch");
+}
+
+async function syncWebPushSubscription(settings) {
+  await upsertWebPushSubscription(settings);
+  try {
+    await sendServerPushTest();
+  } catch (err) {
+    if (!shouldRetryWebPushRegistration(err)) {
+      throw err;
+    }
+    await upsertWebPushSubscription(settings, { forceResubscribe: true });
+    await sendServerPushTest();
+  }
 }
 
 async function removeWebPushSubscription() {
@@ -2149,8 +2179,7 @@ async function saveAppSettingsFromModal() {
         notificationMessage = "通知: 保存済み（ブラウザ通知の許可が必要です）";
       } else if (isWebPushSupported()) {
         try {
-          await upsertWebPushSubscription(nextNotification);
-          await sendServerPushTest();
+          await syncWebPushSubscription(nextNotification);
           notificationMessage = `通知: ON（サーバー連携済み / 朝 ${nextNotification.morning} / 昼 ${nextNotification.noon} / 夜 ${nextNotification.night}）`;
         } catch (err) {
           notificationMessage = `通知: 保存済み（Push連携エラー: ${err instanceof Error ? err.message : "unknown"}）`;
