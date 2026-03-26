@@ -22,14 +22,32 @@ VAPID_SUBJECT=mailto:your-email@example.com
 PORT=4173
 ```
 
-## 4. PWA + Push API サーバー起動
+## 4. ローカルで PWA + Push API サーバー起動
 ```powershell
 npm run pwa:dev
 ```
 
 ブラウザで `http://localhost:4173` を開く。
 
-## 5. アプリ側で通知設定
+## 5. Vercel で使う場合
+Vercel では `server/pwa-server.js` は常駐しないため、`/api/push/*` は `api/` 配下の Functions を使う。
+
+必要な環境変数:
+
+```txt
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=mailto:your-email@example.com
+KV_REST_API_URL=...
+KV_REST_API_TOKEN=...
+```
+
+補足:
+- `KV_REST_API_URL` と `KV_REST_API_TOKEN` は Vercel KV 連携で発行される値を設定する
+- 定期通知は `vercel.json` の Cron から `/api/cron/push` が毎分呼ばれる
+- Vercel 上ではローカルファイル保存は使わず、購読情報は KV に保存する
+
+## 6. アプリ側で通知設定
 1. メニュー -> `アプリ設定`
 2. `習慣リマインド通知を有効化` を ON
 3. 保存
