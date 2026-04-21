@@ -220,7 +220,13 @@ async function kvCommand(command) {
       body: JSON.stringify(command)
     });
   } catch (err) {
-    const error = new Error(`KV request failed before response: ${err && err.message ? err.message : "fetch failed"}`);
+    const details = [
+      err && err.message ? err.message : "fetch failed",
+      err && err.cause && err.cause.code ? `code=${err.cause.code}` : "",
+      err && err.cause && err.cause.hostname ? `host=${err.cause.hostname}` : "",
+      err && err.cause && err.cause.message ? `cause=${err.cause.message}` : ""
+    ].filter(Boolean);
+    const error = new Error(`KV request failed before response: ${details.join(" / ")}`);
     error.statusCode = 503;
     throw error;
   }
