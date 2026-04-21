@@ -44,6 +44,8 @@ KV_REST_API_TOKEN=...
 
 補足:
 - `KV_REST_API_URL` と `KV_REST_API_TOKEN` は Vercel KV 連携で発行される値を設定する
+- Upstash Redis の変数名が `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` の場合も利用できる
+- Vercel に貼る値は引用符を含めない。例: `KV_REST_API_URL="https://..."` ではなく `https://...` だけを入れる
 - Vercel Hobby プランでは毎分 Cron が使えないため、定期通知は外部 Cron から `/api/cron/push` を毎分呼び出す
 - Vercel 上ではローカルファイル保存は使わず、購読情報は KV に保存する
 

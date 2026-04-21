@@ -175,7 +175,8 @@ function storageConfigError() {
 }
 
 function hasKvConfig() {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+  return !!(readEnv("KV_REST_API_URL", "UPSTASH_REDIS_REST_URL")
+    && readEnv("KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_TOKEN"));
 }
 
 async function loadStoreFromKv() {
@@ -200,16 +201,29 @@ async function saveStoreToKv(store) {
 }
 
 async function kvCommand(command) {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(command)
-  });
+  const url = readEnv("KV_REST_API_URL", "UPSTASH_REDIS_REST_URL");
+  const token = readEnv("KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_TOKEN");
+  if (!/^https?:\/\//.test(url)) {
+    const error = new Error("KV_REST_API_URL must start with https://");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(command)
+    });
+  } catch (err) {
+    const error = new Error(`KV request failed before response: ${err && err.message ? err.message : "fetch failed"}`);
+    error.statusCode = 503;
+    throw error;
+  }
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data.error) {
     const error = new Error(data.error || `KV request failed (${response.status})`);
@@ -217,6 +231,15 @@ async function kvCommand(command) {
     throw error;
   }
   return data;
+}
+
+function readEnv(...names) {
+  for (const name of names) {
+    const value = process.env[name];
+    if (typeof value !== "string" || !value.trim()) continue;
+    return value.trim().replace(/^["']|["']$/g, "");
+  }
+  return "";
 }
 
 function sendJson(res, statusCode, payload) {
