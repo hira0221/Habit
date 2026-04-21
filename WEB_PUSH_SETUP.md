@@ -44,8 +44,14 @@ KV_REST_API_TOKEN=...
 
 補足:
 - `KV_REST_API_URL` と `KV_REST_API_TOKEN` は Vercel KV 連携で発行される値を設定する
-- 定期通知は `vercel.json` の Cron から `/api/cron/push` が毎分呼ばれる
+- Vercel Hobby プランでは毎分 Cron が使えないため、定期通知は外部 Cron から `/api/cron/push` を毎分呼び出す
 - Vercel 上ではローカルファイル保存は使わず、購読情報は KV に保存する
+
+外部 Cron の例:
+- `https://cron-job.org/` などでジョブを作る
+- URL は `https://your-domain.vercel.app/api/cron/push`
+- 実行間隔は 1分
+- まずはブラウザで `/api/cron/push` を開いて JSON が返ることを確認する
 
 ## 6. アプリ側で通知設定
 1. メニュー -> `アプリ設定`
