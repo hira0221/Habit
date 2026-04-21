@@ -8,8 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="習慣チェック">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icons/app-icon.svg">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-20260306.png">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="/apple-touch-icon-20260306.png">
 <title>習慣チェック</title>
 
 <style>
@@ -71,6 +72,17 @@ header h1 {
   font-size: 12px;
   color: #ffd36a;
   margin-top: 4px;
+  min-height: 16px;
+  line-height: 16px;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease;
+}
+
+.streak.show {
+  opacity: 1;
+  visibility: visible;
 }
 
 .edit-btn {
@@ -92,41 +104,123 @@ header h1 {
   border-color: transparent;
 }
 
-.export-btn {
+.menu-btn {
   position: absolute;
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
+  border: none;
+  background: transparent;
   color: var(--text);
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  border-radius: 10px;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  font-size: 14px;
+  font-size: 24px;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.import-btn {
-  position: absolute;
-  left: 34px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
+.header-menu {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 20, 0.34);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 60;
+}
+
+.header-menu.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.header-menu-panel {
+  width: min(80vw, 280px);
+  height: 100%;
+  padding: max(16px, env(safe-area-inset-top)) 12px 12px;
+  border-right: 1px solid var(--border);
+  background: rgba(36, 43, 56, 0.98);
+  box-shadow: 12px 0 24px rgba(0,0,0,0.28);
+  transform: translateX(-100%);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.header-menu.show .header-menu-panel {
+  transform: translateX(0);
+}
+
+.header-menu-title {
+  margin: 2px 4px 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text);
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  font-size: 14px;
-  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.header-menu-list {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-menu-item {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  border-radius: 0;
+  padding: 13px 10px;
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0;
+  display: block;
+}
+
+.header-menu-item:last-child {
+  border-bottom: none;
+}
+
+.header-menu-item:active,
+.header-menu-item:hover {
+  background: rgba(59, 69, 91, 0.42);
 }
 
 
 .progress-wrap {
   padding: 12px 16px 22px;
+}
+
+.time-slot-switch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 320px;
+  margin: 0 auto 10px;
+}
+
+.time-slot-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 999px;
+  min-height: 34px;
+  font-size: 12px;
+}
+
+.time-slot-btn.active {
+  background: var(--accent);
+  border-color: transparent;
+  color: #08131f;
+  font-weight: 700;
 }
 
 .progress-slider {
@@ -153,6 +247,15 @@ header h1 {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+}
+
+.progress-page.ring-page {
+  min-height: 184px;
+  align-items: center;
+}
+
+.progress-page.ring-page .progress-ring {
+  margin-top: 2px;
 }
 
 .progress-ring {
@@ -185,7 +288,7 @@ header h1 {
 }
 
 .ring-value.complete {
-  stroke: #6fb6ff;
+  stroke: #79c9a0;
 }
 
 .progress-ring.animate {
@@ -226,6 +329,10 @@ header h1 {
   fill: #6fb6ff;
 }
 
+.history-dots circle.fallback {
+  opacity: 0.45;
+}
+
 .history-dots .dot-hit {
   fill: transparent;
   pointer-events: all;
@@ -247,6 +354,37 @@ header h1 {
   font-size: 12px;
   color: var(--muted);
   margin-bottom: 4px;
+}
+
+.history-scope-switch {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.history-scope-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 999px;
+  min-height: 28px;
+  font-size: 11px;
+}
+
+.history-scope-btn.active {
+  background: var(--accent);
+  border-color: transparent;
+  color: #08131f;
+  font-weight: 700;
+}
+
+.history-scope-meta {
+  min-height: 14px;
+  margin: -2px 0 6px;
+  text-align: right;
+  font-size: 10px;
+  color: var(--muted);
 }
 
 .history-detail {
@@ -289,6 +427,17 @@ header h1 {
   padding: 2px 0;
 }
 
+.history-slot-badge {
+  min-width: 24px;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.5;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
 .status-dot {
   width: 8px;
   height: 8px;
@@ -308,6 +457,13 @@ header h1 {
   margin-top: 8px;
   font-size: 11px;
   color: var(--muted);
+}
+
+.history-scope-note {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--muted);
+  text-align: right;
 }
 
 .progress-dots {
@@ -355,7 +511,7 @@ header h1 {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 8px 12px 80px;
+  padding: 8px 12px 118px;
 }
 
 .empty-hint {
@@ -526,19 +682,81 @@ header h1 {
   justify-content: center;
 }
 
-/* プラスボタン */
-.add-btn {
+/* ===== 下部ドック ===== */
+.bottom-dock-wrap {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
-  width: 56px;
-  height: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  padding: 0 12px calc(32px + env(safe-area-inset-bottom));
+  z-index: 20;
+}
+
+.bottom-dock {
+  width: min(100%, 336px);
+  height: 76px;
+  padding: 0 8px;
+  border-radius: 24px;
+  background: rgba(36, 43, 56, 0.82);
+  border: 1px solid rgba(138, 191, 255, 0.22);
+  box-shadow: 0 12px 22px rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+}
+
+.dock-btn {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  border-radius: 999px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+}
+
+.add-btn {
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   border: none;
-  font-size: 28px;
-  color: #08131f;
   background: var(--accent);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  color: #08131f;
+  font-size: 28px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.28);
+}
+
+.dock-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.calendar-dock-btn {
+  transform: translateX(-6px);
+}
+
+.calendar-dock-svg {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.history-dock-btn {
+  transform: translateX(6px);
+}
+
+.history-dock-svg {
+  width: 26px;
+  height: 26px;
+  display: block;
 }
 
 .modal-backdrop {
@@ -603,6 +821,29 @@ header h1 {
   border-color: var(--accent);
 }
 
+.habit-slot-picker {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.habit-slot-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 999px;
+  min-height: 34px;
+  font-size: 12px;
+}
+
+.habit-slot-btn.active {
+  background: var(--accent);
+  border-color: transparent;
+  color: #08131f;
+  font-weight: 700;
+}
+
 .habit-modal-actions {
   margin-top: 12px;
   display: grid;
@@ -659,6 +900,328 @@ header h1 {
   position: absolute;
   right: 0;
 }
+
+.settings-modal {
+  width: min(100%, 420px);
+  max-height: min(86vh, 680px);
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.35);
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+}
+
+.modal-backdrop.show .settings-modal {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.settings-section {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.settings-section + .settings-section {
+  margin-top: 10px;
+}
+
+.settings-section-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.settings-field {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.settings-field label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.settings-select,
+.settings-time {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #101725;
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.settings-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.settings-switch label {
+  font-size: 13px;
+}
+
+.settings-switch input {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-note {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.calendar-modal {
+  width: min(100%, 420px);
+  height: min(80vh, 620px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.35);
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  touch-action: manipulation;
+}
+
+.modal-backdrop.show .calendar-modal {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.calendar-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.calendar-close-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.calendar-controls {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.calendar-nav-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.calendar-period {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.calendar-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.calendar-mode-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.calendar-mode-btn.active {
+  background: var(--accent);
+  border-color: transparent;
+  color: #08131f;
+}
+
+.calendar-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.calendar-day {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  background: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.calendar-day.empty {
+  visibility: hidden;
+}
+
+.calendar-day-num {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.calendar-day-rate {
+  font-size: 11px;
+  text-align: right;
+  color: var(--text);
+}
+
+.calendar-day[data-level="high"] {
+  border-color: rgba(121, 201, 160, 0.65);
+  background: rgba(23, 52, 40, 0.9);
+}
+
+.calendar-day[data-level="mid"] {
+  border-color: rgba(138, 191, 255, 0.55);
+}
+
+.calendar-day.today {
+  box-shadow: inset 0 0 0 1px rgba(138, 191, 255, 0.65);
+}
+
+.calendar-year-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.calendar-month-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  background: var(--surface-2);
+}
+
+.calendar-month-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.calendar-month-name {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.calendar-month-value {
+  margin-top: 6px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.calendar-month-sub {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.calendar-month-ring {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  flex: 0 0 40px;
+}
+
+.calendar-month-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.calendar-month-ring-track {
+  fill: none;
+  stroke: #3b455b;
+  stroke-width: 3.6;
+}
+
+.calendar-month-ring-value {
+  fill: none;
+  stroke: #79c9a0;
+  stroke-width: 3.6;
+  stroke-linecap: round;
+}
+
+.calendar-month-ring-value.complete {
+  stroke: #6fb6ff;
+}
+
+.calendar-month-ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.calendar-empty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 18px 0 8px;
+}
 </style>
 </head>
 
@@ -667,8 +1230,17 @@ header h1 {
 
 <header>
   <div class="header-top">
-    <button class="export-btn" id="exportBtn" aria-label="エクスポート">⤴</button>
-    <button class="import-btn" id="importBtn" aria-label="インポート">⤵</button>
+    <button class="menu-btn" id="menuBtn" aria-label="メニュー">☰</button>
+    <div class="header-menu" id="headerMenu" aria-hidden="true">
+      <div class="header-menu-panel">
+        <div class="header-menu-title">メニュー</div>
+        <div class="header-menu-list">
+          <button class="header-menu-item" id="menuAppSettingsBtn" type="button">アプリ設定</button>
+          <button class="header-menu-item" id="menuExportBtn" type="button">エクスポート</button>
+          <button class="header-menu-item" id="menuImportBtn" type="button">インポート</button>
+        </div>
+      </div>
+    </div>
     <h1 id="date"></h1>
     <button class="edit-btn" id="editBtn">編集</button>
   </div>
@@ -676,8 +1248,13 @@ header h1 {
 </header>
 
 <div class="progress-wrap" id="progressWrap">
+  <div class="time-slot-switch" id="timeSlotSwitch" aria-label="時間帯切替">
+    <button class="time-slot-btn active" type="button" data-slot="morning">朝</button>
+    <button class="time-slot-btn" type="button" data-slot="noon">昼</button>
+    <button class="time-slot-btn" type="button" data-slot="night">夜</button>
+  </div>
   <div class="progress-slider" id="progressSlider">
-    <div class="progress-page">
+    <div class="progress-page ring-page">
       <div class="progress-ring" id="progressRing">
         <svg viewBox="0 0 120 120" aria-hidden="true">
           <circle class="ring-track" cx="60" cy="60" r="52"></circle>
@@ -688,9 +1265,16 @@ header h1 {
         </div>
       </div>
     </div>
-    <div class="progress-page">
+    <div class="progress-page history-page">
       <div class="history-panel" id="historyPanel">
         <div class="history-title">直近7日</div>
+        <div class="history-scope-switch" id="historyScopeSwitch" aria-label="履歴表示切替">
+          <button class="history-scope-btn active" type="button" data-scope="all">全体</button>
+          <button class="history-scope-btn" type="button" data-scope="morning">朝</button>
+          <button class="history-scope-btn" type="button" data-scope="noon">昼</button>
+          <button class="history-scope-btn" type="button" data-scope="night">夜</button>
+        </div>
+        <div class="history-scope-meta" id="historyScopeMeta"></div>
         <svg class="history-svg" viewBox="0 0 280 120" aria-hidden="true">
           <line class="history-grid" x1="10" y1="100" x2="270" y2="100"></line>
           <line class="history-grid" x1="10" y1="55" x2="270" y2="55"></line>
@@ -706,6 +1290,7 @@ header h1 {
       </div>
       <ul class="history-detail-list" id="historyDetailList"></ul>
       <div class="history-empty" id="historyEmpty" hidden>この日の記録はありません</div>
+      <div class="history-scope-note" id="historyScopeNote" hidden>※時間帯別未対応日は全体値で表示</div>
     </div>
   </div>
     </div>
@@ -719,7 +1304,35 @@ header h1 {
 <div class="empty-hint" id="emptyHint">何か習慣を追加してみましょう！</div>
 <div class="list" id="list"></div>
 
-<button class="add-btn" id="addBtn">＋</button>
+<div class="bottom-dock-wrap">
+  <nav class="bottom-dock" aria-label="下部ナビゲーション">
+    <button class="dock-btn history-dock-btn" id="historyBtn" type="button" aria-label="履歴">
+      <svg class="history-dock-svg" viewBox="0 0 24 24" aria-hidden="true">
+        <polyline points="4,16.5 9,11.5 13,14.2 19.5,7.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        <circle cx="4" cy="16.5" r="1.2" fill="currentColor"></circle>
+        <circle cx="9" cy="11.5" r="1.2" fill="currentColor"></circle>
+        <circle cx="13" cy="14.2" r="1.2" fill="currentColor"></circle>
+        <circle cx="19.5" cy="7.8" r="1.2" fill="currentColor"></circle>
+      </svg>
+    </button>
+    <button class="dock-btn add-btn" id="addBtn" type="button" aria-label="追加">
+      +
+    </button>
+    <button class="dock-btn calendar-dock-btn" id="calendarBtn" type="button" aria-label="カレンダー">
+      <svg class="calendar-dock-svg" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3.5" y="5.5" width="17" height="15" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"></rect>
+        <line x1="3.5" y1="9" x2="20.5" y2="9" stroke="currentColor" stroke-width="1.8"></line>
+        <line x1="8" y1="3.8" x2="8" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></line>
+        <line x1="16" y1="3.8" x2="16" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></line>
+        <circle cx="8.2" cy="12.6" r="0.95" fill="currentColor"></circle>
+        <circle cx="12" cy="12.6" r="0.95" fill="currentColor"></circle>
+        <circle cx="15.8" cy="12.6" r="0.95" fill="currentColor"></circle>
+        <circle cx="8.2" cy="16.2" r="0.95" fill="currentColor"></circle>
+        <circle cx="12" cy="16.2" r="0.95" fill="currentColor"></circle>
+      </svg>
+    </button>
+  </nav>
+</div>
 
 </div>
 
@@ -729,6 +1342,11 @@ header h1 {
   <div class="habit-modal" role="dialog" aria-modal="true" aria-labelledby="habitModalTitle">
     <h2 class="habit-modal-title" id="habitModalTitle">習慣を追加</h2>
     <input class="habit-modal-input" id="habitModalInput" type="text" maxlength="60" />
+    <div class="habit-slot-picker" id="habitSlotPicker" aria-label="時間帯選択">
+      <button class="habit-slot-btn active" type="button" data-slot="morning">朝</button>
+      <button class="habit-slot-btn" type="button" data-slot="noon">昼</button>
+      <button class="habit-slot-btn" type="button" data-slot="night">夜</button>
+    </div>
     <div class="habit-modal-actions">
       <button class="habit-modal-btn primary" id="habitModalSave" type="button">完了</button>
       <button class="habit-modal-btn cancel" id="habitModalCancel" type="button">キャンセル</button>
@@ -747,6 +1365,71 @@ header h1 {
   </div>
 </div>
 
+<div class="modal-backdrop" id="calendarModalBackdrop" aria-hidden="true">
+  <div class="calendar-modal" role="dialog" aria-modal="true" aria-labelledby="calendarTitle">
+    <div class="calendar-head">
+      <h2 class="calendar-title" id="calendarTitle">記録カレンダー</h2>
+      <button class="calendar-close-btn" id="calendarCloseBtn" type="button" aria-label="閉じる">×</button>
+    </div>
+    <div class="calendar-mode-switch" role="tablist" aria-label="表示切替">
+      <button class="calendar-mode-btn active" id="calendarModeMonth" type="button">月</button>
+      <button class="calendar-mode-btn" id="calendarModeYear" type="button">年</button>
+    </div>
+    <div class="calendar-controls">
+      <button class="calendar-nav-btn" id="calendarPrevBtn" type="button" aria-label="前へ">‹</button>
+      <div class="calendar-period" id="calendarPeriodLabel"></div>
+      <button class="calendar-nav-btn" id="calendarNextBtn" type="button" aria-label="次へ">›</button>
+    </div>
+    <div class="calendar-content" id="calendarContent"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="settingsModalBackdrop" aria-hidden="true">
+  <div class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+    <h2 class="habit-modal-title" id="settingsModalTitle">アプリ設定</h2>
+    <div class="settings-section">
+      <p class="settings-section-title">表示</p>
+      <div class="settings-field">
+        <label for="settingsHistoryScope">履歴の初期表示</label>
+        <select class="settings-select" id="settingsHistoryScope">
+          <option value="all">全体</option>
+          <option value="morning">朝</option>
+          <option value="noon">昼</option>
+          <option value="night">夜</option>
+        </select>
+      </div>
+      <div class="settings-switch">
+        <label for="settingsConfirmDelete">習慣削除前に確認する</label>
+        <input id="settingsConfirmDelete" type="checkbox" />
+      </div>
+    </div>
+    <div class="settings-section">
+      <p class="settings-section-title">通知</p>
+      <div class="settings-switch">
+        <label for="settingsNotificationEnabled">習慣リマインド通知を有効化</label>
+        <input id="settingsNotificationEnabled" type="checkbox" />
+      </div>
+      <div class="settings-field">
+        <label for="settingsNotifyMorning">朝の通知時刻</label>
+        <input class="settings-time" id="settingsNotifyMorning" type="time" />
+      </div>
+      <div class="settings-field">
+        <label for="settingsNotifyNoon">昼の通知時刻</label>
+        <input class="settings-time" id="settingsNotifyNoon" type="time" />
+      </div>
+      <div class="settings-field">
+        <label for="settingsNotifyNight">夜の通知時刻</label>
+        <input class="settings-time" id="settingsNotifyNight" type="time" />
+      </div>
+      <div class="settings-note" id="settingsNotificationNote"></div>
+    </div>
+    <div class="habit-modal-actions">
+      <button class="habit-modal-btn primary" id="settingsModalSave" type="button">保存</button>
+      <button class="habit-modal-btn cancel" id="settingsModalCancel" type="button">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <script>
 
 const DATE_KEY = "lastOpenedDate";
@@ -755,14 +1438,47 @@ const STREAK_COUNT_KEY = "streakCount";
 const STREAK_LAST_DATE_KEY = "streakLastDate";
 const RATE_HISTORY_KEY = "rateHistoryByDate";
 const DAILY_SNAPSHOT_KEY = "dailySnapshotByDate";
+const APP_SETTINGS_KEY = "appSettings";
+const NOTIFICATION_SETTINGS_KEY = "notificationSettings";
+const PUSH_CLIENT_ID_KEY = "pushClientId";
+const DEFAULT_APP_SETTINGS = {
+  defaultHistoryScope: "all",
+  confirmBeforeDelete: true
+};
+const DEFAULT_NOTIFICATION_SETTINGS = {
+  enabled: false,
+  morning: "08:00",
+  noon: "12:00",
+  night: "21:00"
+};
 const APP_STORAGE_KEYS = [
   STORAGE_KEY,
   DATE_KEY,
   STREAK_COUNT_KEY,
   STREAK_LAST_DATE_KEY,
   RATE_HISTORY_KEY,
-  DAILY_SNAPSHOT_KEY
+  DAILY_SNAPSHOT_KEY,
+  APP_SETTINGS_KEY,
+  NOTIFICATION_SETTINGS_KEY
 ];
+const TIME_SLOTS = [
+  { id: "morning", label: "朝" },
+  { id: "noon", label: "昼" },
+  { id: "night", label: "夜" }
+];
+const HISTORY_SCOPES = ["all", "morning", "noon", "night"];
+const HISTORY_SCOPE_COLORS = {
+  all: "#79c9a0",
+  morning: "#f6b26b",
+  noon: "#ffffff",
+  night: "#6fb6ff"
+};
+const MAIN_RING_SLOT_COLORS = {
+  morning: HISTORY_SCOPE_COLORS.morning,
+  noon: HISTORY_SCOPE_COLORS.noon,
+  night: HISTORY_SCOPE_COLORS.night
+};
+const MAIN_RING_COMPLETE_COLOR = "#79c9a0";
 let habits = loadHabits();
 let openedWrapper = null;
 let isEditMode = false;
@@ -773,8 +1489,11 @@ const listEl = document.getElementById("list");
 const emptyHintEl = document.getElementById("emptyHint");
 const dateEl = document.getElementById("date");
 const streakEl = document.getElementById("streak");
-const exportBtn = document.getElementById("exportBtn");
-const importBtn = document.getElementById("importBtn");
+const menuBtn = document.getElementById("menuBtn");
+const headerMenuEl = document.getElementById("headerMenu");
+const menuAppSettingsBtn = document.getElementById("menuAppSettingsBtn");
+const menuExportBtn = document.getElementById("menuExportBtn");
+const menuImportBtn = document.getElementById("menuImportBtn");
 const editBtn = document.getElementById("editBtn");
 const progressSliderEl = document.getElementById("progressSlider");
 const progressRingEl = document.getElementById("progressRing");
@@ -788,11 +1507,16 @@ const historyDetailDateEl = document.getElementById("historyDetailDate");
 const historyDetailRateEl = document.getElementById("historyDetailRate");
 const historyDetailListEl = document.getElementById("historyDetailList");
 const historyEmptyEl = document.getElementById("historyEmpty");
+const historyScopeSwitchEl = document.getElementById("historyScopeSwitch");
+const historyScopeMetaEl = document.getElementById("historyScopeMeta");
+const historyScopeNoteEl = document.getElementById("historyScopeNote");
 const progressDotRingEl = document.getElementById("progressDotRing");
 const progressDotHistoryEl = document.getElementById("progressDotHistory");
+const timeSlotSwitchEl = document.getElementById("timeSlotSwitch");
 const habitModalBackdropEl = document.getElementById("habitModalBackdrop");
 const habitModalTitleEl = document.getElementById("habitModalTitle");
 const habitModalInputEl = document.getElementById("habitModalInput");
+const habitSlotPickerEl = document.getElementById("habitSlotPicker");
 const habitModalCancelEl = document.getElementById("habitModalCancel");
 const habitModalSaveEl = document.getElementById("habitModalSave");
 const confirmModalBackdropEl = document.getElementById("confirmModalBackdrop");
@@ -801,6 +1525,26 @@ const confirmModalMessageEl = document.getElementById("confirmModalMessage");
 const confirmModalCancelEl = document.getElementById("confirmModalCancel");
 const confirmModalOkEl = document.getElementById("confirmModalOk");
 const importFileInputEl = document.getElementById("importFileInput");
+const historyBtn = document.getElementById("historyBtn");
+const calendarBtn = document.getElementById("calendarBtn");
+const calendarModalBackdropEl = document.getElementById("calendarModalBackdrop");
+const calendarCloseBtn = document.getElementById("calendarCloseBtn");
+const calendarModeMonthBtn = document.getElementById("calendarModeMonth");
+const calendarModeYearBtn = document.getElementById("calendarModeYear");
+const calendarPrevBtn = document.getElementById("calendarPrevBtn");
+const calendarNextBtn = document.getElementById("calendarNextBtn");
+const calendarPeriodLabelEl = document.getElementById("calendarPeriodLabel");
+const calendarContentEl = document.getElementById("calendarContent");
+const settingsModalBackdropEl = document.getElementById("settingsModalBackdrop");
+const settingsHistoryScopeEl = document.getElementById("settingsHistoryScope");
+const settingsConfirmDeleteEl = document.getElementById("settingsConfirmDelete");
+const settingsNotificationEnabledEl = document.getElementById("settingsNotificationEnabled");
+const settingsNotifyMorningEl = document.getElementById("settingsNotifyMorning");
+const settingsNotifyNoonEl = document.getElementById("settingsNotifyNoon");
+const settingsNotifyNightEl = document.getElementById("settingsNotifyNight");
+const settingsNotificationNoteEl = document.getElementById("settingsNotificationNote");
+const settingsModalSaveEl = document.getElementById("settingsModalSave");
+const settingsModalCancelEl = document.getElementById("settingsModalCancel");
 
 const RING_RADIUS = 52;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -819,6 +1563,18 @@ let confirmModalConfig = {
 let lastTapTime = 0;
 let lastTapX = 0;
 let lastTapY = 0;
+let calendarMode = "month";
+let calendarCursorDate = new Date();
+let activeTimeSlot = "morning";
+let selectedHabitSlot = "morning";
+let activeHistoryScope = "all";
+let isHeaderMenuOpen = false;
+let appSettings = { ...DEFAULT_APP_SETTINGS };
+let isSettingsModalOpen = false;
+let serviceWorkerRegistrationPromise = null;
+const timeSlotButtons = Array.from(timeSlotSwitchEl.querySelectorAll(".time-slot-btn"));
+const habitSlotButtons = Array.from(habitSlotPickerEl.querySelectorAll(".habit-slot-btn"));
+const historyScopeButtons = Array.from(historyScopeSwitchEl.querySelectorAll(".history-scope-btn"));
 
 ringValueEl.style.strokeDasharray = `${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`;
 ringValueEl.style.strokeDashoffset = `${RING_CIRCUMFERENCE}`;
@@ -833,10 +1589,73 @@ function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
 }
 
-function openHabitModal(title, initialValue, onSave) {
+function normalizeTimeSlot(slot) {
+  return TIME_SLOTS.some(s => s.id === slot) ? slot : "morning";
+}
+
+function normalizeHistoryScope(scope) {
+  return HISTORY_SCOPES.includes(scope) ? scope : "all";
+}
+
+function createEmptyRateHistory() {
+  return {
+    all: {},
+    morning: {},
+    noon: {},
+    night: {}
+  };
+}
+
+function clampRate(rate) {
+  return Math.max(0, Math.min(100, rate));
+}
+
+function setSelectedHabitSlot(slot) {
+  selectedHabitSlot = normalizeTimeSlot(slot);
+  habitSlotButtons.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.slot === selectedHabitSlot);
+  });
+}
+
+function setActiveTimeSlot(slot) {
+  const nextSlot = normalizeTimeSlot(slot);
+  if (activeTimeSlot === nextSlot) return;
+  activeTimeSlot = nextSlot;
+  timeSlotButtons.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.slot === activeTimeSlot);
+  });
+  closeOpened();
+  render();
+}
+
+function setActiveHistoryScope(scope, options = {}) {
+  const { animate = true } = options;
+  const nextScope = normalizeHistoryScope(scope);
+  if (activeHistoryScope === nextScope) return;
+  activeHistoryScope = nextScope;
+  historyScopeButtons.forEach(b => {
+    b.classList.toggle("active", (b.dataset.scope || "all") === activeHistoryScope);
+  });
+  if (isHistoryPageVisible()) {
+    if (animate) {
+      animateHistoryGraphTransition();
+    } else {
+      renderHistoryGraph();
+    }
+  }
+}
+
+function setHeaderMenuOpen(open) {
+  isHeaderMenuOpen = !!open;
+  headerMenuEl.classList.toggle("show", isHeaderMenuOpen);
+  headerMenuEl.setAttribute("aria-hidden", isHeaderMenuOpen ? "false" : "true");
+}
+
+function openHabitModal(title, initialValue, onSave, initialSlot = activeTimeSlot) {
   onHabitModalSave = onSave;
   habitModalTitleEl.textContent = title;
   habitModalInputEl.value = initialValue || "";
+  setSelectedHabitSlot(initialSlot);
   habitModalBackdropEl.classList.add("show");
   habitModalBackdropEl.setAttribute("aria-hidden", "false");
   setTimeout(() => {
@@ -859,7 +1678,7 @@ function submitHabitModal() {
   }
   const value = habitModalInputEl.value.trim();
   if (!value) return;
-  onHabitModalSave(value);
+  onHabitModalSave(value, selectedHabitSlot);
   closeHabitModal();
 }
 
@@ -1035,12 +1854,366 @@ async function handleImportPayload(payload) {
   }
 }
 
+function loadAppSettings() {
+  try {
+    const raw = localStorage.getItem(APP_SETTINGS_KEY);
+    if (!raw) return { ...DEFAULT_APP_SETTINGS };
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return { ...DEFAULT_APP_SETTINGS };
+    return {
+      defaultHistoryScope: normalizeHistoryScope(parsed.defaultHistoryScope),
+      confirmBeforeDelete: parsed.confirmBeforeDelete !== false
+    };
+  } catch {
+    return { ...DEFAULT_APP_SETTINGS };
+  }
+}
+
+function saveAppSettings(settings) {
+  localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function setNotificationTimeInputsEnabled(enabled) {
+  const disabled = !enabled;
+  settingsNotifyMorningEl.disabled = disabled;
+  settingsNotifyNoonEl.disabled = disabled;
+  settingsNotifyNightEl.disabled = disabled;
+}
+
+function openAppSettings() {
+  const currentApp = loadAppSettings();
+  const currentNotification = loadNotificationSettings();
+  const runtime = getNotificationRuntime();
+
+  settingsHistoryScopeEl.value = normalizeHistoryScope(currentApp.defaultHistoryScope);
+  settingsConfirmDeleteEl.checked = currentApp.confirmBeforeDelete !== false;
+  settingsNotificationEnabledEl.checked = !!currentNotification.enabled;
+  settingsNotifyMorningEl.value = currentNotification.morning;
+  settingsNotifyNoonEl.value = currentNotification.noon;
+  settingsNotifyNightEl.value = currentNotification.night;
+
+  if (runtime === "unsupported") {
+    settingsNotificationEnabledEl.checked = false;
+    settingsNotificationEnabledEl.disabled = true;
+    setNotificationTimeInputsEnabled(false);
+    settingsNotificationNoteEl.textContent = "この環境では通知APIが利用できません。";
+  } else {
+    settingsNotificationEnabledEl.disabled = false;
+    setNotificationTimeInputsEnabled(settingsNotificationEnabledEl.checked);
+    settingsNotificationNoteEl.textContent = runtime === "web"
+      ? (isWebPushSupported()
+        ? "ブラウザ通知許可 + Pushサーバー連携で定時通知します。"
+        : "このブラウザはWeb Push未対応です（通知テストのみ）。")
+      : "インストール版アプリでは毎日通知を予約します。";
+  }
+
+  isSettingsModalOpen = true;
+  settingsModalBackdropEl.classList.add("show");
+  settingsModalBackdropEl.setAttribute("aria-hidden", "false");
+  setTimeout(() => {
+    settingsHistoryScopeEl.focus();
+  }, 0);
+}
+
+function loadNotificationSettings() {
+  try {
+    const raw = localStorage.getItem(NOTIFICATION_SETTINGS_KEY);
+    if (!raw) return { ...DEFAULT_NOTIFICATION_SETTINGS };
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return { ...DEFAULT_NOTIFICATION_SETTINGS };
+    return {
+      enabled: !!parsed.enabled,
+      morning: normalizeNotificationTime(parsed.morning, DEFAULT_NOTIFICATION_SETTINGS.morning),
+      noon: normalizeNotificationTime(parsed.noon, DEFAULT_NOTIFICATION_SETTINGS.noon),
+      night: normalizeNotificationTime(parsed.night, DEFAULT_NOTIFICATION_SETTINGS.night)
+    };
+  } catch {
+    return { ...DEFAULT_NOTIFICATION_SETTINGS };
+  }
+}
+
+function saveNotificationSettings(settings) {
+  localStorage.setItem(NOTIFICATION_SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function normalizeNotificationTime(value, fallback) {
+  if (typeof value !== "string") return fallback;
+  const trimmed = value.trim();
+  if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(trimmed)) return fallback;
+  return trimmed;
+}
+
+function hasWebNotificationApi() {
+  return typeof window !== "undefined" && "Notification" in window;
+}
+
+function getNotificationRuntime() {
+  return hasWebNotificationApi() ? "web" : "unsupported";
+}
+
+async function requestWebNotificationPermission() {
+  if (!hasWebNotificationApi()) return "unsupported";
+  if (Notification.permission === "granted") return "granted";
+  const result = await Notification.requestPermission();
+  return result;
+}
+
+function sendWebTestNotification() {
+  if (!hasWebNotificationApi() || Notification.permission !== "granted") return;
+  new Notification("習慣チェック", {
+    body: "通知テストです。設定は保存されました。"
+  });
+}
+
+function isWebPushSupported() {
+  return typeof window !== "undefined"
+    && window.isSecureContext
+    && "serviceWorker" in navigator
+    && "PushManager" in window;
+}
+
+function getPushClientId() {
+  let clientId = localStorage.getItem(PUSH_CLIENT_ID_KEY) || "";
+  if (!clientId && typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    clientId = crypto.randomUUID();
+    localStorage.setItem(PUSH_CLIENT_ID_KEY, clientId);
+  }
+  return clientId;
+}
+
+function base64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i += 1) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+function ensureServiceWorkerRegistration() {
+  if (!("serviceWorker" in navigator)) {
+    return Promise.reject(new Error("Service Worker が利用できません。"));
+  }
+  if (serviceWorkerRegistrationPromise) return serviceWorkerRegistrationPromise;
+  serviceWorkerRegistrationPromise = navigator.serviceWorker.register("./service-worker.js");
+  return serviceWorkerRegistrationPromise;
+}
+
+async function fetchPushPublicKey() {
+  const res = await fetch("/api/push/public-key");
+  if (!res.ok) {
+    throw new Error("Push公開鍵の取得に失敗しました。サーバー設定を確認してください。");
+  }
+  const payload = await res.json();
+  if (!payload || typeof payload.publicKey !== "string" || !payload.publicKey) {
+    throw new Error("Push公開鍵の形式が不正です。");
+  }
+  return payload.publicKey;
+}
+
+async function postPushJson(url, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    let message = `${res.status} ${res.statusText}`;
+    try {
+      const data = await res.json();
+      if (data && typeof data.error === "string" && data.error) {
+        message = data.error;
+      }
+    } catch {
+      // ignore json parse failure
+    }
+    throw new Error(message);
+  }
+  return res.json().catch(() => ({}));
+}
+
+async function upsertWebPushSubscription(settings, options = {}) {
+  if (!isWebPushSupported()) {
+    throw new Error("このブラウザはWeb Pushに対応していません。");
+  }
+  const registration = await ensureServiceWorkerRegistration();
+  const publicKey = await fetchPushPublicKey();
+  const keyBytes = base64ToUint8Array(publicKey);
+  let subscription = await registration.pushManager.getSubscription();
+  if (subscription && options.forceResubscribe) {
+    await subscription.unsubscribe().catch(() => {});
+    subscription = null;
+  }
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: keyBytes
+    });
+  }
+  const clientId = getPushClientId();
+  if (!clientId) {
+    throw new Error("clientId を生成できませんでした。");
+  }
+  await postPushJson("/api/push/subscribe", {
+    clientId,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tokyo",
+    settings,
+    subscription: subscription.toJSON()
+  });
+}
+
+function shouldRetryWebPushRegistration(err) {
+  if (!(err instanceof Error)) return false;
+  const message = (err.message || "").toLowerCase();
+  return message.includes("subscription not found")
+    || message.includes("410")
+    || message.includes("404")
+    || message.includes("403")
+    || message.includes("401")
+    || message.includes("unauthorized")
+    || message.includes("forbidden")
+    || message.includes("mismatch");
+}
+
+async function syncWebPushSubscription(settings) {
+  await upsertWebPushSubscription(settings);
+  try {
+    await sendServerPushTest();
+  } catch (err) {
+    if (!shouldRetryWebPushRegistration(err)) {
+      throw err;
+    }
+    await upsertWebPushSubscription(settings, { forceResubscribe: true });
+    await sendServerPushTest();
+  }
+}
+
+async function removeWebPushSubscription() {
+  if (!isWebPushSupported()) return;
+  const registration = await ensureServiceWorkerRegistration();
+  const subscription = await registration.pushManager.getSubscription();
+  if (subscription) {
+    await subscription.unsubscribe();
+  }
+  const clientId = localStorage.getItem(PUSH_CLIENT_ID_KEY) || "";
+  if (clientId) {
+    try {
+      await postPushJson("/api/push/unsubscribe", { clientId });
+    } catch (err) {
+      console.warn("購読解除の同期に失敗しました", err);
+    }
+  }
+}
+
+async function sendServerPushTest() {
+  const clientId = localStorage.getItem(PUSH_CLIENT_ID_KEY) || "";
+  if (!clientId) return;
+  await postPushJson("/api/push/test", { clientId });
+}
+
+function closeAppSettingsModal() {
+  isSettingsModalOpen = false;
+  settingsModalBackdropEl.classList.remove("show");
+  settingsModalBackdropEl.setAttribute("aria-hidden", "true");
+}
+
+async function saveAppSettingsFromModal() {
+  const currentApp = loadAppSettings();
+  const currentNotification = loadNotificationSettings();
+  const runtime = getNotificationRuntime();
+
+  const nextApp = {
+    defaultHistoryScope: normalizeHistoryScope(settingsHistoryScopeEl.value || currentApp.defaultHistoryScope),
+    confirmBeforeDelete: settingsConfirmDeleteEl.checked
+  };
+  appSettings = nextApp;
+  saveAppSettings(nextApp);
+  setActiveHistoryScope(nextApp.defaultHistoryScope, { animate: false });
+
+  const nextNotification = {
+    enabled: runtime !== "unsupported" ? !!settingsNotificationEnabledEl.checked : false,
+    morning: normalizeNotificationTime(settingsNotifyMorningEl.value, currentNotification.morning),
+    noon: normalizeNotificationTime(settingsNotifyNoonEl.value, currentNotification.noon),
+    night: normalizeNotificationTime(settingsNotifyNightEl.value, currentNotification.night)
+  };
+  saveNotificationSettings(nextNotification);
+
+  let notificationMessage = `通知: ${nextNotification.enabled ? "ON" : "OFF"}`;
+  if (runtime === "web") {
+    if (!nextNotification.enabled) {
+      await removeWebPushSubscription();
+    } else {
+      const permission = await requestWebNotificationPermission();
+      if (permission !== "granted") {
+        notificationMessage = "通知: 保存済み（ブラウザ通知の許可が必要です）";
+      } else if (isWebPushSupported()) {
+        try {
+          await syncWebPushSubscription(nextNotification);
+          notificationMessage = `通知: ON（サーバー連携済み / 朝 ${nextNotification.morning} / 昼 ${nextNotification.noon} / 夜 ${nextNotification.night}）`;
+        } catch (err) {
+          console.error("Push連携エラー", err);
+          notificationMessage = `通知: 保存済み（Push連携エラー: ${err instanceof Error ? err.message : "unknown"}）`;
+        }
+      } else {
+        sendWebTestNotification();
+        notificationMessage = `通知: ON（テスト通知のみ。Web Push非対応）`;
+      }
+    }
+  } else if (runtime === "unsupported") {
+    notificationMessage = "通知: この環境では利用できません";
+  }
+
+  closeAppSettingsModal();
+  await openConfirmModal({
+    title: "アプリ設定",
+    message: `保存しました。\n履歴表示: ${nextApp.defaultHistoryScope}\n削除前確認: ${nextApp.confirmBeforeDelete ? "ON" : "OFF"}\n${notificationMessage}`,
+    okText: "OK",
+    showCancel: false
+  });
+}
+
+function openNotificationSettings() {
+  openAppSettings();
+}
+
+async function syncNotificationScheduleOnLaunch() {
+  try {
+    const settings = loadNotificationSettings();
+    const runtime = getNotificationRuntime();
+    if (runtime === "web" && settings.enabled && hasWebNotificationApi() && Notification.permission === "granted") {
+      if (isWebPushSupported()) {
+        try {
+          await upsertWebPushSubscription(settings);
+        } catch (err) {
+          console.warn("Web Push購読の同期に失敗しました", err);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("通知スケジュールの同期に失敗しました", err);
+  }
+}
+
 function loadHabits() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map(item => {
+        if (!item || typeof item !== "object") return null;
+        const text = typeof item.text === "string" ? item.text.trim() : "";
+        if (!text) return null;
+        return {
+          text,
+          done: !!item.done,
+          slot: normalizeTimeSlot(item.slot)
+        };
+      })
+      .filter(Boolean);
   } catch (err) {
     console.warn("habits の読み込みに失敗したため初期化します", err);
     localStorage.removeItem(STORAGE_KEY);
@@ -1067,6 +2240,198 @@ function getPrevDateKey(key) {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
+function getDateKeyFromDate(date) {
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+}
+
+function resolveDailyRate(dateKey, history, snapshots) {
+  const historyRate = Number(history[dateKey]);
+  if (Number.isFinite(historyRate)) {
+    return clampRate(historyRate);
+  }
+  const snapshotRate = Number((snapshots[dateKey] && snapshots[dateKey].rate) ?? NaN);
+  if (Number.isFinite(snapshotRate)) {
+    return clampRate(snapshotRate);
+  }
+  return null;
+}
+
+function resolveScopedHistoryRate(historyByScope, dateKey, scope) {
+  const normalizedScope = normalizeHistoryScope(scope);
+  const scopedRate = Number((historyByScope[normalizedScope] || {})[dateKey]);
+  if (Number.isFinite(scopedRate)) {
+    return { rate: clampRate(scopedRate), source: "scope" };
+  }
+  const allRate = Number((historyByScope.all || {})[dateKey]);
+  if (normalizedScope !== "all" && Number.isFinite(allRate)) {
+    return { rate: clampRate(allRate), source: "fallback-all" };
+  }
+  return { rate: 0, source: "none" };
+}
+
+function renderCalendarMonth(history, snapshots) {
+  const year = calendarCursorDate.getFullYear();
+  const month = calendarCursorDate.getMonth();
+  calendarPeriodLabelEl.textContent = `${year}年${month + 1}月`;
+  calendarContentEl.innerHTML = "";
+
+  const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+  const weekdayRow = document.createElement("div");
+  weekdayRow.className = "calendar-weekdays";
+  weekdayRow.innerHTML = weekdays.map(label => `<div class="calendar-weekday">${label}</div>`).join("");
+
+  const grid = document.createElement("div");
+  grid.className = "calendar-grid";
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayKey = getTodayKey();
+  let hasData = false;
+
+  for (let i = 0; i < firstDay; i += 1) {
+    const empty = document.createElement("div");
+    empty.className = "calendar-day empty";
+    grid.appendChild(empty);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const d = new Date(year, month, day);
+    const dateKey = getDateKeyFromDate(d);
+    const rate = resolveDailyRate(dateKey, history, snapshots);
+    const dayEl = document.createElement("div");
+    dayEl.className = "calendar-day";
+    if (rate !== null) {
+      hasData = true;
+      if (rate >= 80) {
+        dayEl.dataset.level = "high";
+      } else if (rate > 0) {
+        dayEl.dataset.level = "mid";
+      }
+    }
+    if (dateKey === todayKey) {
+      dayEl.classList.add("today");
+    }
+    dayEl.innerHTML = `
+      <div class="calendar-day-num">${day}</div>
+      <div class="calendar-day-rate">${rate === null ? "-" : `${rate}%`}</div>
+    `;
+    grid.appendChild(dayEl);
+  }
+
+  calendarContentEl.appendChild(weekdayRow);
+  calendarContentEl.appendChild(grid);
+  if (!hasData) {
+    const emptyText = document.createElement("div");
+    emptyText.className = "calendar-empty";
+    emptyText.textContent = "この月の記録はまだありません";
+    calendarContentEl.appendChild(emptyText);
+  }
+}
+
+function renderCalendarYear(history, snapshots) {
+  const year = calendarCursorDate.getFullYear();
+  calendarPeriodLabelEl.textContent = `${year}年`;
+  calendarContentEl.innerHTML = "";
+
+  const monthsJa = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+  const grid = document.createElement("div");
+  grid.className = "calendar-year-grid";
+  let hasData = false;
+
+  for (let month = 0; month < 12; month += 1) {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let total = 0;
+    let count = 0;
+    let perfect = 0;
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const key = getDateKeyFromDate(new Date(year, month, day));
+      const rate = resolveDailyRate(key, history, snapshots);
+      if (rate === null) continue;
+      total += rate;
+      count += 1;
+      if (rate === 100) perfect += 1;
+    }
+
+    if (count > 0) hasData = true;
+    const avg = count > 0 ? Math.round(total / count) : null;
+    const ringRadius = 14;
+    const ringCircumference = 2 * Math.PI * ringRadius;
+    const ringRatio = avg === null ? 0 : Math.max(0, Math.min(1, avg / 100));
+    const ringDashOffset = ringCircumference * (1 - ringRatio);
+    const card = document.createElement("div");
+    card.className = "calendar-month-card";
+    card.innerHTML = `
+      <div class="calendar-month-head">
+        <div>
+          <div class="calendar-month-name">${monthsJa[month]}</div>
+          <div class="calendar-month-value">${avg === null ? "-" : `${avg}%`}</div>
+        </div>
+        <div class="calendar-month-ring">
+          <svg viewBox="0 0 40 40" aria-hidden="true">
+            <circle class="calendar-month-ring-track" cx="20" cy="20" r="${ringRadius}"></circle>
+            <circle
+              class="calendar-month-ring-value ${avg === 100 ? "complete" : ""}"
+              cx="20"
+              cy="20"
+              r="${ringRadius}"
+              stroke-dasharray="${ringCircumference} ${ringCircumference}"
+              stroke-dashoffset="${ringDashOffset}"
+            ></circle>
+          </svg>
+        </div>
+      </div>
+      <div class="calendar-month-sub">記録日 ${count}日 / 100%達成 ${perfect}日</div>
+    `;
+    grid.appendChild(card);
+  }
+
+  calendarContentEl.appendChild(grid);
+  if (!hasData) {
+    const emptyText = document.createElement("div");
+    emptyText.className = "calendar-empty";
+    emptyText.textContent = "この年の記録はまだありません";
+    calendarContentEl.appendChild(emptyText);
+  }
+}
+
+function renderCalendarView() {
+  calendarModeMonthBtn.classList.toggle("active", calendarMode === "month");
+  calendarModeYearBtn.classList.toggle("active", calendarMode === "year");
+  const historyByScope = loadRateHistory();
+  const history = historyByScope.all || {};
+  const snapshots = loadDailySnapshots();
+  if (calendarMode === "month") {
+    renderCalendarMonth(history, snapshots);
+  } else {
+    renderCalendarYear(history, snapshots);
+  }
+}
+
+function shiftCalendarCursor(step) {
+  if (calendarMode === "month") {
+    calendarCursorDate = new Date(calendarCursorDate.getFullYear(), calendarCursorDate.getMonth() + step, 1);
+  } else {
+    calendarCursorDate = new Date(calendarCursorDate.getFullYear() + step, calendarCursorDate.getMonth(), 1);
+  }
+  renderCalendarView();
+}
+
+function openCalendarModal() {
+  calendarMode = "month";
+  calendarCursorDate = new Date();
+  calendarModalBackdropEl.classList.add("show");
+  calendarModalBackdropEl.setAttribute("aria-hidden", "false");
+  renderCalendarView();
+  setTimeout(() => {
+    calendarCloseBtn.focus();
+  }, 0);
+}
+
+function closeCalendarModal() {
+  calendarModalBackdropEl.classList.remove("show");
+  calendarModalBackdropEl.setAttribute("aria-hidden", "true");
+}
+
 function getStoredStreakCount() {
   const raw = localStorage.getItem(STREAK_COUNT_KEY);
   const count = Number.parseInt(raw || "0", 10);
@@ -1074,36 +2439,60 @@ function getStoredStreakCount() {
 }
 
 function loadRateHistory() {
+  const empty = createEmptyRateHistory();
   try {
     const raw = localStorage.getItem(RATE_HISTORY_KEY);
-    if (!raw) return {};
+    if (!raw) return empty;
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return empty;
+    }
+    const hasScopedKeys = HISTORY_SCOPES.some(scope => scope in parsed);
+    if (!hasScopedKeys) {
+      // Backward compatibility: old format { "YYYY-M-D": rate }
+      return {
+        ...empty,
+        all: parsed
+      };
+    }
+    return {
+      all: parsed.all && typeof parsed.all === "object" ? parsed.all : {},
+      morning: parsed.morning && typeof parsed.morning === "object" ? parsed.morning : {},
+      noon: parsed.noon && typeof parsed.noon === "object" ? parsed.noon : {},
+      night: parsed.night && typeof parsed.night === "object" ? parsed.night : {}
+    };
   } catch (err) {
     localStorage.removeItem(RATE_HISTORY_KEY);
-    return {};
+    return empty;
   }
 }
 
 function saveRateHistory(history) {
-  const pruned = { ...history };
+  const pruned = createEmptyRateHistory();
+  HISTORY_SCOPES.forEach(scope => {
+    const scopedHistory = history[scope] && typeof history[scope] === "object" ? history[scope] : {};
+    pruned[scope] = { ...scopedHistory };
+  });
   const now = new Date();
   const oldest = new Date(now);
   oldest.setDate(oldest.getDate() - 35);
   const oldestTime = oldest.getTime();
-  Object.keys(pruned).forEach(key => {
-    const date = parseDateKey(key);
-    if (!date || date.getTime() < oldestTime) {
-      delete pruned[key];
-    }
+  HISTORY_SCOPES.forEach(scope => {
+    Object.keys(pruned[scope]).forEach(key => {
+      const date = parseDateKey(key);
+      if (!date || date.getTime() < oldestTime) {
+        delete pruned[scope][key];
+      }
+    });
   });
   localStorage.setItem(RATE_HISTORY_KEY, JSON.stringify(pruned));
 }
 
-function writeDailyRateHistory(dateKey, rate) {
+function writeDailyRateHistory(dateKey, rate, scope = "all") {
   if (!dateKey) return;
   const history = loadRateHistory();
-  history[dateKey] = Math.max(0, Math.min(100, rate));
+  const scoped = normalizeHistoryScope(scope);
+  history[scoped][dateKey] = clampRate(rate);
   saveRateHistory(history);
 }
 
@@ -1137,7 +2526,11 @@ function saveDailySnapshots(allSnapshots) {
 function buildSnapshotFromHabits(rate) {
   return {
     rate,
-    habits: habits.map(h => ({ text: h.text, done: !!h.done }))
+    habits: habits.map(h => ({
+      text: h.text,
+      done: !!h.done,
+      slot: normalizeTimeSlot(h.slot)
+    }))
   };
 }
 
@@ -1164,18 +2557,60 @@ function getRecent7Days() {
 function buildSmoothPath(points) {
   if (points.length === 0) return "";
   if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  if (points.length === 2) {
+    return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
+  }
+
+  const n = points.length;
+  const secants = new Array(n - 1);
+  const tangents = new Array(n);
+
+  for (let i = 0; i < n - 1; i += 1) {
+    const dx = points[i + 1].x - points[i].x;
+    secants[i] = dx === 0 ? 0 : (points[i + 1].y - points[i].y) / dx;
+  }
+
+  tangents[0] = secants[0];
+  tangents[n - 1] = secants[n - 2];
+  for (let i = 1; i < n - 1; i += 1) {
+    const prev = secants[i - 1];
+    const next = secants[i];
+    tangents[i] = prev * next <= 0 ? 0 : (prev + next) / 2;
+  }
+
+  for (let i = 0; i < n - 1; i += 1) {
+    const slope = secants[i];
+    if (slope === 0) {
+      tangents[i] = 0;
+      tangents[i + 1] = 0;
+      continue;
+    }
+    const a = tangents[i] / slope;
+    const b = tangents[i + 1] / slope;
+    const norm = Math.hypot(a, b);
+    if (norm > 3) {
+      const scale = 3 / norm;
+      tangents[i] = scale * a * slope;
+      tangents[i + 1] = scale * b * slope;
+    }
+  }
+
   let d = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 1; i < points.length; i += 1) {
-    const prev = points[i - 1];
-    const curr = points[i];
-    const cx = (prev.x + curr.x) / 2;
-    d += ` Q ${cx} ${prev.y}, ${curr.x} ${curr.y}`;
+  for (let i = 0; i < n - 1; i += 1) {
+    const p0 = points[i];
+    const p1 = points[i + 1];
+    const dx = p1.x - p0.x;
+    const c1x = p0.x + dx / 3;
+    const c1y = p0.y + (tangents[i] * dx) / 3;
+    const c2x = p1.x - dx / 3;
+    const c2y = p1.y - (tangents[i + 1] * dx) / 3;
+    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p1.x} ${p1.y}`;
   }
   return d;
 }
 
 function getHistoryChartData() {
-  const history = loadRateHistory();
+  const historyByScope = loadRateHistory();
   const snapshots = loadDailySnapshots();
   const days = getRecent7Days();
   const minX = 16;
@@ -1183,19 +2618,32 @@ function getHistoryChartData() {
   const minY = 12;
   const maxY = 100;
   const stepX = (maxX - minX) / 6;
+  let scopeDataDays = 0;
+  let fallbackDays = 0;
   const points = days.map((day, i) => {
-    const rate = Number(history[day.key] ?? 0);
-    const normalized = Math.max(0, Math.min(100, rate)) / 100;
+    const resolved = resolveScopedHistoryRate(historyByScope, day.key, activeHistoryScope);
+    const normalized = clampRate(resolved.rate) / 100;
     const x = minX + stepX * i;
     const y = maxY - normalized * (maxY - minY);
-    return { x, y, rate };
+    if (activeHistoryScope !== "all") {
+      if (resolved.source === "scope") scopeDataDays += 1;
+      if (resolved.source === "fallback-all") fallbackDays += 1;
+    }
+    return { x, y, rate: resolved.rate, source: resolved.source };
   });
-  return { history, snapshots, days, points, maxY };
+  return { historyByScope, snapshots, days, points, maxY, scopeDataDays, fallbackDays };
 }
 
-function paintHistoryGraph(days, points, history, snapshots) {
+function paintHistoryGraph(days, points, historyByScope, snapshots, scopeDataDays, fallbackDays) {
   historyPathEl.setAttribute("d", buildSmoothPath(points));
+  historyPathEl.style.stroke = HISTORY_SCOPE_COLORS[activeHistoryScope] || HISTORY_SCOPE_COLORS.all;
   historyDotsEl.innerHTML = "";
+  historyScopeMetaEl.textContent = "";
+  if (activeHistoryScope === "all") {
+    historyScopeMetaEl.textContent = "全体の達成率";
+  } else {
+    historyScopeMetaEl.textContent = `時間帯別データ ${scopeDataDays}/7日` + (fallbackDays > 0 ? `（未対応 ${fallbackDays}日）` : "");
+  }
   points.forEach((p, i) => {
     const day = days[i];
     const hit = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -1208,6 +2656,10 @@ function paintHistoryGraph(days, points, history, snapshots) {
     circle.setAttribute("cx", String(p.x));
     circle.setAttribute("cy", String(p.y));
     circle.setAttribute("r", selectedHistoryKey === day.key ? "4.6" : "3.2");
+    circle.style.fill = HISTORY_SCOPE_COLORS[activeHistoryScope] || HISTORY_SCOPE_COLORS.all;
+    if (p.source === "fallback-all") {
+      circle.classList.add("fallback");
+    }
     if (selectedHistoryKey === day.key) {
       circle.classList.add("active");
     }
@@ -1225,17 +2677,18 @@ function paintHistoryGraph(days, points, history, snapshots) {
     historyDetailEl.hidden = true;
     historyDetailListEl.innerHTML = "";
     historyEmptyEl.hidden = true;
+    historyScopeNoteEl.hidden = fallbackDays === 0 || activeHistoryScope === "all";
     return;
   }
 
   historyDetailEl.hidden = false;
   const selectedDay = days.find(day => day.key === selectedHistoryKey) || days[days.length - 1];
   const selectedSnapshot = snapshots[selectedDay.key];
-  const selectedRate = Number(
-    history[selectedDay.key] ?? (selectedSnapshot ? selectedSnapshot.rate : 0)
-  );
+  const selectedRateInfo = resolveScopedHistoryRate(historyByScope, selectedDay.key, activeHistoryScope);
+  const selectedRate = selectedRateInfo.rate;
   historyDetailDateEl.textContent = selectedDay.key;
   historyDetailRateEl.textContent = `${selectedRate}%`;
+  historyScopeNoteEl.hidden = !(activeHistoryScope !== "all" && fallbackDays > 0);
   historyDetailListEl.innerHTML = "";
 
   if (!selectedSnapshot || !Array.isArray(selectedSnapshot.habits) || selectedSnapshot.habits.length === 0) {
@@ -1243,27 +2696,47 @@ function paintHistoryGraph(days, points, history, snapshots) {
     return;
   }
 
+  const snapshotHasSlotData = selectedSnapshot.habits.some(item => typeof item.slot === "string");
+  const targetHabits = activeHistoryScope === "all"
+    ? selectedSnapshot.habits
+    : !snapshotHasSlotData
+      ? []
+    : selectedSnapshot.habits.filter(item => normalizeTimeSlot(item.slot) === activeHistoryScope);
+
+  if (targetHabits.length === 0) {
+    historyEmptyEl.hidden = false;
+    if (activeHistoryScope !== "all" && !snapshotHasSlotData) {
+      historyScopeNoteEl.hidden = false;
+    }
+    return;
+  }
+
   historyEmptyEl.hidden = true;
-  selectedSnapshot.habits.forEach(item => {
+  targetHabits.forEach(item => {
+    const slotMeta = TIME_SLOTS.find(s => s.id === item.slot);
     const li = document.createElement("li");
     li.className = "history-detail-item";
     const dot = document.createElement("span");
     dot.className = `status-dot ${item.done ? "done" : "todo"}`;
+    const slot = document.createElement("span");
+    slot.className = "history-slot-badge";
+    slot.textContent = slotMeta ? slotMeta.label : "-";
     const text = document.createElement("span");
     text.textContent = item.text;
     li.appendChild(dot);
+    li.appendChild(slot);
     li.appendChild(text);
     historyDetailListEl.appendChild(li);
   });
 }
 
 function renderHistoryGraph() {
-  const { history, snapshots, days, points } = getHistoryChartData();
-  paintHistoryGraph(days, points, history, snapshots);
+  const { historyByScope, snapshots, days, points, scopeDataDays, fallbackDays } = getHistoryChartData();
+  paintHistoryGraph(days, points, historyByScope, snapshots, scopeDataDays, fallbackDays);
 }
 
 function animateHistoryGraphTransition() {
-  const { history, snapshots, days, points: targetPoints } = getHistoryChartData();
+  const { historyByScope, snapshots, days, points: targetPoints, scopeDataDays, fallbackDays } = getHistoryChartData();
   if (historyAnimationFrameId) {
     cancelAnimationFrame(historyAnimationFrameId);
     historyAnimationFrameId = null;
@@ -1297,13 +2770,13 @@ function animateHistoryGraphTransition() {
       };
     });
 
-    paintHistoryGraph(days, animatedPoints, history, snapshots);
+    paintHistoryGraph(days, animatedPoints, historyByScope, snapshots, scopeDataDays, fallbackDays);
 
     if (elapsed < totalDurationMs) {
       historyAnimationFrameId = requestAnimationFrame(frame);
     } else {
       historyAnimationFrameId = null;
-      paintHistoryGraph(days, targetPoints, history, snapshots);
+      paintHistoryGraph(days, targetPoints, historyByScope, snapshots, scopeDataDays, fallbackDays);
     }
   };
 
@@ -1311,7 +2784,7 @@ function animateHistoryGraphTransition() {
 }
 
 function animateHistoryGraphFromZero() {
-  const { history, snapshots, days, points: targetPoints, maxY } = getHistoryChartData();
+  const { historyByScope, snapshots, days, points: targetPoints, maxY, scopeDataDays, fallbackDays } = getHistoryChartData();
   if (historyAnimationFrameId) {
     cancelAnimationFrame(historyAnimationFrameId);
     historyAnimationFrameId = null;
@@ -1335,13 +2808,13 @@ function animateHistoryGraphFromZero() {
       };
     });
 
-    paintHistoryGraph(days, animatedPoints, history, snapshots);
+    paintHistoryGraph(days, animatedPoints, historyByScope, snapshots, scopeDataDays, fallbackDays);
 
     if (elapsed < totalDurationMs) {
       historyAnimationFrameId = requestAnimationFrame(frame);
     } else {
       historyAnimationFrameId = null;
-      paintHistoryGraph(days, targetPoints, history, snapshots);
+      paintHistoryGraph(days, targetPoints, historyByScope, snapshots, scopeDataDays, fallbackDays);
     }
   };
 
@@ -1351,6 +2824,15 @@ function animateHistoryGraphFromZero() {
 function isHistoryPageVisible() {
   const pageWidth = progressSliderEl.clientWidth || 1;
   return progressSliderEl.scrollLeft > pageWidth * 0.2;
+}
+
+function moveToProgressPage(page) {
+  const pageWidth = progressSliderEl.clientWidth || 1;
+  const targetPage = page >= 1 ? 1 : 0;
+  progressSliderEl.scrollTo({
+    left: pageWidth * targetPage,
+    behavior: "smooth"
+  });
 }
 
 function updateProgressDots() {
@@ -1388,6 +2870,7 @@ function isPerfectDay() {
 function updateStreakDisplay() {
   if (!isPerfectDay()) {
     streakEl.textContent = "";
+    streakEl.classList.remove("show");
     return;
   }
 
@@ -1398,9 +2881,11 @@ function updateStreakDisplay() {
   const displayCount = storedLastDate === expectedPrev ? storedCount + 1 : 1;
   if (displayCount < 2) {
     streakEl.textContent = "";
+    streakEl.classList.remove("show");
     return;
   }
   streakEl.textContent = `${displayCount}日連続達成中`;
+  streakEl.classList.add("show");
 }
 
 function resetHabitsIfNewDay() {
@@ -1412,7 +2897,14 @@ function resetHabitsIfNewDay() {
     const done = habits.filter(h => h.done).length;
     const total = habits.length;
     const lastRate = total === 0 ? 0 : Math.round(done / total * 100);
-    writeDailyRateHistory(lastDate, lastRate);
+    writeDailyRateHistory(lastDate, lastRate, "all");
+    TIME_SLOTS.forEach(slot => {
+      const scopedHabits = habits.filter(h => normalizeTimeSlot(h.slot) === slot.id);
+      const scopedDone = scopedHabits.filter(h => h.done).length;
+      const scopedTotal = scopedHabits.length;
+      const scopedRate = scopedTotal === 0 ? 0 : Math.round(scopedDone / scopedTotal * 100);
+      writeDailyRateHistory(lastDate, scopedRate, slot.id);
+    });
     writeDailySnapshot(lastDate, lastRate);
 
     const yesterdayKey = getPrevDateKey(todayKey);
@@ -1454,12 +2946,23 @@ function setEditMode(enabled) {
 }
 
 function updateRate() {
-  const total = habits.length;
-  const done = habits.filter(h => h.done).length;
+  const visibleHabits = habits.filter(h => normalizeTimeSlot(h.slot) === activeTimeSlot);
+  const total = visibleHabits.length;
+  const done = visibleHabits.filter(h => h.done).length;
   const rate = total === 0 ? 0 : Math.round(done / total * 100);
+  const totalAll = habits.length;
+  const doneAll = habits.filter(h => h.done).length;
+  const totalRateAll = totalAll === 0 ? 0 : Math.round(doneAll / totalAll * 100);
   const prevRate = displayedRate;
-  writeDailyRateHistory(getTodayKey(), rate);
-  writeDailySnapshot(getTodayKey(), rate);
+  writeDailyRateHistory(getTodayKey(), totalRateAll, "all");
+  TIME_SLOTS.forEach(slot => {
+    const scopedHabits = habits.filter(h => normalizeTimeSlot(h.slot) === slot.id);
+    const scopedDone = scopedHabits.filter(h => h.done).length;
+    const scopedTotal = scopedHabits.length;
+    const scopedRate = scopedTotal === 0 ? 0 : Math.round(scopedDone / scopedTotal * 100);
+    writeDailyRateHistory(getTodayKey(), scopedRate, slot.id);
+  });
+  writeDailySnapshot(getTodayKey(), totalRateAll);
 
   progressPercentEl.textContent = `${rate}%`;
 
@@ -1467,6 +2970,9 @@ function updateRate() {
   const dashOffset = RING_CIRCUMFERENCE * (1 - ratio);
   ringValueEl.style.strokeDashoffset = `${dashOffset}`;
   ringValueEl.classList.toggle("complete", rate === 100);
+  ringValueEl.style.stroke = rate === 100
+    ? MAIN_RING_COMPLETE_COLOR
+    : (MAIN_RING_SLOT_COLORS[activeTimeSlot] || MAIN_RING_SLOT_COLORS.noon);
 
   if (rate > displayedRate) {
     progressRingEl.classList.remove("animate");
@@ -1495,15 +3001,29 @@ function render() {
   openedWrapper = null;
   let renderedCount = 0;
 
-  habits.forEach((habit, index) => {
+  const visibleHabits = habits
+    .map((habit, index) => ({ habit, index }))
+    .filter(entry => normalizeTimeSlot(entry.habit.slot) === activeTimeSlot);
+
+  visibleHabits.forEach((entry, visibleIndex) => {
+    const { habit, index } = entry;
     const wrapper = document.createElement("div");
     wrapper.className = "swipe-wrapper";
 
     const deleteArea = document.createElement("div");
     deleteArea.className = "delete-area";
     deleteArea.textContent = "削除";
-    deleteArea.addEventListener("click", () => {
+    deleteArea.addEventListener("click", async () => {
       if (!isEditMode) return;
+      if (appSettings.confirmBeforeDelete) {
+        const ok = await openConfirmModal({
+          title: "削除確認",
+          message: "この習慣を削除しますか？",
+          okText: "削除",
+          cancelText: "キャンセル"
+        });
+        if (!ok) return;
+      }
       habits.splice(index, 1);
       save();
       render();
@@ -1527,11 +3047,12 @@ function render() {
     editItemBtn.addEventListener("click", e => {
       e.stopPropagation();
       if (!isEditMode) return;
-      openHabitModal("習慣を編集", habit.text, value => {
+      openHabitModal("習慣を編集", habit.text, (value, slot) => {
         habits[index].text = value;
+        habits[index].slot = slot;
         save();
         render();
-      });
+      }, habit.slot);
     });
 
     const checkArea = document.createElement("div");
@@ -1551,8 +3072,8 @@ function render() {
     let isDragging = false;
     let activePointerId = null;
     let dragStartY = 0;
-    let dragFromIndex = index;
-    let dragToIndex = index;
+    let dragFromIndex = visibleIndex;
+    let dragToIndex = visibleIndex;
     let dragWrapperRefs = [];
     let dragMidPoints = [];
     let dragShiftAmount = 0;
@@ -1586,7 +3107,7 @@ function render() {
         }
       }
       if (nextIndex > dragFromIndex) nextIndex -= 1;
-      return Math.max(0, Math.min(habits.length - 1, nextIndex));
+      return Math.max(0, Math.min(visibleHabits.length - 1, nextIndex));
     };
 
     item.addEventListener("touchstart", e => {
@@ -1662,8 +3183,8 @@ function render() {
       isDragging = true;
       activePointerId = e.pointerId;
       dragStartY = e.clientY;
-      dragFromIndex = index;
-      dragToIndex = index;
+      dragFromIndex = visibleIndex;
+      dragToIndex = visibleIndex;
       dragWrapperRefs = Array.from(listEl.querySelectorAll(".swipe-wrapper"));
       dragMidPoints = dragWrapperRefs.map(w => {
         const rect = w.getBoundingClientRect();
@@ -1697,7 +3218,9 @@ function render() {
       wrapper.classList.remove("drag-source");
       item.classList.remove("dragging");
       if (dragToIndex !== dragFromIndex) {
-        moveHabit(dragFromIndex, dragToIndex);
+        const fromActualIndex = visibleHabits[dragFromIndex].index;
+        const toActualIndex = visibleHabits[dragToIndex].index;
+        moveHabit(fromActualIndex, toActualIndex);
         save();
       }
       render();
@@ -1728,14 +3251,74 @@ function render() {
 }
 
 document.getElementById("addBtn").addEventListener("click", () => {
-  openHabitModal("習慣を追加", "", value => {
-    habits.push({ text: value, done: false });
+  openHabitModal("習慣を追加", "", (value, slot) => {
+    habits.push({ text: value, done: false, slot });
     save();
     render();
+  }, activeTimeSlot);
+});
+historyBtn.addEventListener("click", () => {
+  moveToProgressPage(isHistoryPageVisible() ? 0 : 1);
+});
+timeSlotButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    setActiveTimeSlot(btn.dataset.slot || "morning");
+  });
+});
+habitSlotButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    setSelectedHabitSlot(btn.dataset.slot || "morning");
+  });
+});
+historyScopeButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const nextScope = normalizeHistoryScope(btn.dataset.scope || "all");
+    setActiveHistoryScope(nextScope, { animate: true });
   });
 });
 
-exportBtn.addEventListener("click", async () => {
+calendarBtn.addEventListener("click", () => {
+  openCalendarModal();
+});
+calendarCloseBtn.addEventListener("click", closeCalendarModal);
+calendarModeMonthBtn.addEventListener("click", () => {
+  calendarMode = "month";
+  renderCalendarView();
+});
+calendarModeYearBtn.addEventListener("click", () => {
+  calendarMode = "year";
+  renderCalendarView();
+});
+calendarPrevBtn.addEventListener("click", () => shiftCalendarCursor(-1));
+calendarNextBtn.addEventListener("click", () => shiftCalendarCursor(1));
+calendarModalBackdropEl.addEventListener("click", e => {
+  if (e.target === calendarModalBackdropEl) {
+    closeCalendarModal();
+  }
+});
+calendarModalBackdropEl.addEventListener("touchend", e => {
+  if (!calendarModalBackdropEl.classList.contains("show")) return;
+  if (!e.changedTouches || e.changedTouches.length === 0) return;
+  const touch = e.changedTouches[0];
+  const now = Date.now();
+  const dt = now - lastTapTime;
+  const dx = Math.abs(touch.clientX - lastTapX);
+  const dy = Math.abs(touch.clientY - lastTapY);
+  const isDoubleTap = dt > 0 && dt < 320 && dx < 24 && dy < 24;
+  lastTapTime = now;
+  lastTapX = touch.clientX;
+  lastTapY = touch.clientY;
+  if (isDoubleTap && e.cancelable) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+menuBtn.addEventListener("click", e => {
+  e.stopPropagation();
+  setHeaderMenuOpen(!isHeaderMenuOpen);
+});
+menuExportBtn.addEventListener("click", async () => {
+  setHeaderMenuOpen(false);
   const ok = await openConfirmModal({
     title: "エクスポート確認",
     message: "現在のデータをJSONでエクスポートしますか？",
@@ -1745,7 +3328,8 @@ exportBtn.addEventListener("click", async () => {
   if (!ok) return;
   exportLocalStorageAsJson();
 });
-importBtn.addEventListener("click", async () => {
+menuImportBtn.addEventListener("click", async () => {
+  setHeaderMenuOpen(false);
   const ok = await openConfirmModal({
     title: "インポート確認",
     message: "インポートするJSONファイルを選択しますか？",
@@ -1755,6 +3339,15 @@ importBtn.addEventListener("click", async () => {
   if (!ok) return;
   importFileInputEl.value = "";
   importFileInputEl.click();
+});
+menuAppSettingsBtn.addEventListener("click", () => {
+  setHeaderMenuOpen(false);
+  openAppSettings();
+});
+headerMenuEl.addEventListener("click", e => {
+  if (e.target === headerMenuEl) {
+    setHeaderMenuOpen(false);
+  }
 });
 
 editBtn.addEventListener("click", () => {
@@ -1776,6 +3369,18 @@ habitModalInputEl.addEventListener("keydown", e => {
     submitHabitModal();
   } else if (e.key === "Escape") {
     closeHabitModal();
+  }
+});
+settingsNotificationEnabledEl.addEventListener("change", () => {
+  setNotificationTimeInputsEnabled(settingsNotificationEnabledEl.checked);
+});
+settingsModalCancelEl.addEventListener("click", closeAppSettingsModal);
+settingsModalSaveEl.addEventListener("click", async () => {
+  await saveAppSettingsFromModal();
+});
+settingsModalBackdropEl.addEventListener("click", e => {
+  if (e.target === settingsModalBackdropEl) {
+    closeAppSettingsModal();
   }
 });
 
@@ -1802,9 +3407,22 @@ confirmModalBackdropEl.addEventListener("click", e => {
   }
 });
 document.addEventListener("keydown", e => {
-  if (!confirmModalBackdropEl.classList.contains("show")) return;
-  if (e.key === "Escape" && confirmModalConfig.allowEscapeClose) {
-    closeConfirmModal(false);
+  if (isHeaderMenuOpen && e.key === "Escape") {
+    setHeaderMenuOpen(false);
+    return;
+  }
+  if (isSettingsModalOpen && e.key === "Escape") {
+    closeAppSettingsModal();
+    return;
+  }
+  if (confirmModalBackdropEl.classList.contains("show")) {
+    if (e.key === "Escape" && confirmModalConfig.allowEscapeClose) {
+      closeConfirmModal(false);
+    }
+    return;
+  }
+  if (calendarModalBackdropEl.classList.contains("show") && e.key === "Escape") {
+    closeCalendarModal();
   }
 });
 
@@ -1828,25 +3446,20 @@ if (!isEditMode) {
   setEditMode(false);
 }
 
+appSettings = loadAppSettings();
+setActiveHistoryScope(appSettings.defaultHistoryScope, { animate: false });
+setActiveTimeSlot("morning");
+
 render();
 updateProgressDots();
+void syncNotificationScheduleOnLaunch();
 
 if ("serviceWorker" in navigator) {
-  const isLocalDevHost =
-    location.hostname === "localhost" || location.hostname === "127.0.0.1";
-  if (isLocalDevHost) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(reg => reg.unregister());
-      });
+  window.addEventListener("load", () => {
+    ensureServiceWorkerRegistration().catch(err => {
+      console.warn("Service Worker registration failed:", err);
     });
-  } else {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./service-worker.js").catch(err => {
-        console.warn("Service Worker registration failed:", err);
-      });
-    });
-  }
+  });
 }
 </script>
 </body>

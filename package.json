@@ -3,16 +3,9 @@
     "pwa:dev": "node ./server/pwa-server.js",
     "pwa:serve": "npx serve . -l 4173",
     "pwa:publish-check": "powershell -ExecutionPolicy Bypass -File ./scripts/pwa-preflight.ps1",
-    "push:keygen": "node ./server/generate-vapid-keys.js",
-    "cap:prepare": "powershell -ExecutionPolicy Bypass -File ./scripts/sync-web.ps1",
-    "cap:sync:android": "npm run cap:prepare && npx cap sync android",
-    "cap:open:android": "npx cap open android"
+    "push:keygen": "node ./server/generate-vapid-keys.js"
   },
   "dependencies": {
-    "@capacitor/android": "^8.1.0",
-    "@capacitor/cli": "^8.1.0",
-    "@capacitor/core": "^8.1.0",
-    "@capacitor/local-notifications": "^8.0.0",
     "express": "^4.21.2",
     "web-push": "^3.6.7"
   }

@@ -10,7 +10,7 @@
 
 ## 公開対象
 - ルートディレクトリをそのまま静的ホスティングに公開する。
-- `web/` は Capacitor 用の生成物で、PWA公開には使わない。
+- `web/` と `android/` は古い Capacitor 用の生成物で、現在のPWA公開には使わない。
 
 ## よく使うコマンド
 ```powershell
@@ -21,10 +21,5 @@ npm run pwa:serve
 npm run pwa:publish-check
 ```
 
-## Capacitorを触る場合
-```powershell
-npm run cap:prepare
-npm run cap:sync:android
-```
-
-`web/` は上記で再生成されるため、直接編集しないこと。
+## Androidアプリ化
+現在の運用対象外。

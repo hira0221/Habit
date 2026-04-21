@@ -1943,35 +1943,11 @@ function normalizeNotificationTime(value, fallback) {
   return trimmed;
 }
 
-function buildNextNotificationDate(timeText) {
-  const [hourText, minuteText] = timeText.split(":");
-  const hour = Number(hourText);
-  const minute = Number(minuteText);
-  const target = new Date();
-  target.setHours(hour, minute, 0, 0);
-  if (target.getTime() <= Date.now()) {
-    target.setDate(target.getDate() + 1);
-  }
-  return target;
-}
-
-function getCapacitorLocalNotificationsPlugin() {
-  if (typeof window === "undefined") return null;
-  const cap = window.Capacitor;
-  if (!cap || typeof cap.isNativePlatform !== "function" || !cap.isNativePlatform()) {
-    return null;
-  }
-  const plugin = cap.Plugins && cap.Plugins.LocalNotifications;
-  return plugin || null;
-}
-
 function hasWebNotificationApi() {
   return typeof window !== "undefined" && "Notification" in window;
 }
 
 function getNotificationRuntime() {
-  const plugin = getCapacitorLocalNotificationsPlugin();
-  if (plugin) return "capacitor";
   return hasWebNotificationApi() ? "web" : "unsupported";
 }
 
@@ -2165,12 +2141,7 @@ async function saveAppSettingsFromModal() {
   saveNotificationSettings(nextNotification);
 
   let notificationMessage = `通知: ${nextNotification.enabled ? "ON" : "OFF"}`;
-  if (runtime === "capacitor") {
-    await scheduleHabitNotifications(nextNotification);
-    if (nextNotification.enabled) {
-      notificationMessage = `通知: ON（朝 ${nextNotification.morning} / 昼 ${nextNotification.noon} / 夜 ${nextNotification.night}）`;
-    }
-  } else if (runtime === "web") {
+  if (runtime === "web") {
     if (!nextNotification.enabled) {
       await removeWebPushSubscription();
     } else {
@@ -2203,57 +2174,6 @@ async function saveAppSettingsFromModal() {
   });
 }
 
-async function cancelAllHabitNotifications() {
-  const plugin = getCapacitorLocalNotificationsPlugin();
-  if (!plugin) return;
-  await plugin.cancel({
-    notifications: [{ id: 7101 }, { id: 7102 }, { id: 7103 }]
-  });
-}
-
-async function scheduleHabitNotifications(settings) {
-  const plugin = getCapacitorLocalNotificationsPlugin();
-  if (!plugin) return;
-
-  if (!settings.enabled) {
-    await cancelAllHabitNotifications();
-    return;
-  }
-
-  const check = await plugin.checkPermissions();
-  if (check.display !== "granted") {
-    const request = await plugin.requestPermissions();
-    if (request.display !== "granted") {
-      alert("通知権限が許可されていないため、通知を設定できません。");
-      return;
-    }
-  }
-
-  await cancelAllHabitNotifications();
-  await plugin.schedule({
-    notifications: [
-      {
-        id: 7101,
-        title: "朝の習慣チェック",
-        body: "今日の朝タスクを確認しましょう。",
-        schedule: { at: buildNextNotificationDate(settings.morning), every: "day", allowWhileIdle: true }
-      },
-      {
-        id: 7102,
-        title: "昼の習慣チェック",
-        body: "今日の昼タスクを確認しましょう。",
-        schedule: { at: buildNextNotificationDate(settings.noon), every: "day", allowWhileIdle: true }
-      },
-      {
-        id: 7103,
-        title: "夜の習慣チェック",
-        body: "今日の夜タスクを確認しましょう。",
-        schedule: { at: buildNextNotificationDate(settings.night), every: "day", allowWhileIdle: true }
-      }
-    ]
-  });
-}
-
 function openNotificationSettings() {
   openAppSettings();
 }
@@ -2262,10 +2182,6 @@ async function syncNotificationScheduleOnLaunch() {
   try {
     const settings = loadNotificationSettings();
     const runtime = getNotificationRuntime();
-    if (runtime === "capacitor") {
-      await scheduleHabitNotifications(settings);
-      return;
-    }
     if (runtime === "web" && settings.enabled && hasWebNotificationApi() && Notification.permission === "granted") {
       if (isWebPushSupported()) {
         try {
