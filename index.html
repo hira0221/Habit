@@ -2182,6 +2182,7 @@ async function saveAppSettingsFromModal() {
           await syncWebPushSubscription(nextNotification);
           notificationMessage = `通知: ON（サーバー連携済み / 朝 ${nextNotification.morning} / 昼 ${nextNotification.noon} / 夜 ${nextNotification.night}）`;
         } catch (err) {
+          console.error("Push連携エラー", err);
           notificationMessage = `通知: 保存済み（Push連携エラー: ${err instanceof Error ? err.message : "unknown"}）`;
         }
       } else {
