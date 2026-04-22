@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#1b202b">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="習慣チェック">
@@ -15,12 +15,12 @@
 
 <style>
 :root {
-  --bg: #1b202b;
-  --surface: #242b38;
-  --surface-2: #2d3647;
+  --bg: #000000;
+  --surface: #181d26;
+  --surface-2: #202632;
   --text: #e9edf5;
   --muted: #aab3c5;
-  --border: #3a4357;
+  --border: #2a3140;
   --accent: #63a4ff;
   --danger: #d9534f;
   --done-bg: #173428;
@@ -49,8 +49,8 @@ html, body {
 /* ===== ヘッダー ===== */
 header {
   padding: 12px 16px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  border-bottom: 1px solid #ffffff;
 }
 
 .header-top {
@@ -91,16 +91,16 @@ header h1 {
   top: 50%;
   transform: translateY(-50%);
   border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-  border-radius: 999px;
+  background: #000000;
+  color: #ffffff;
+  border-radius: 8px;
   padding: 6px 12px;
   font-size: 12px;
 }
 
 .app.edit-mode .edit-btn {
-  background: var(--accent);
-  color: #08131f;
+  background: #ffffff;
+  color: #000000;
   border-color: transparent;
 }
 
@@ -209,17 +209,17 @@ header h1 {
 
 .time-slot-btn {
   border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-  border-radius: 999px;
+  background: #000000;
+  color: #ffffff;
+  border-radius: 8px;
   min-height: 34px;
   font-size: 12px;
 }
 
 .time-slot-btn.active {
-  background: var(--accent);
+  background: #ffffff;
   border-color: transparent;
-  color: #08131f;
+  color: #000000;
   font-weight: 700;
 }
 
@@ -273,7 +273,7 @@ header h1 {
 
 .ring-track {
   fill: none;
-  stroke: #3b455b;
+  stroke: #252c3a;
   stroke-width: 10;
 }
 
@@ -281,7 +281,7 @@ header h1 {
   fill: none;
   stroke: #79c9a0;
   stroke-width: 10;
-  stroke-linecap: round;
+  stroke-linecap: butt;
   transition:
     stroke-dashoffset 0.45s cubic-bezier(0.22, 1, 0.36, 1),
     stroke 0.55s ease;
@@ -308,7 +308,7 @@ header h1 {
 }
 
 .history-grid {
-  stroke: #3b455b;
+  stroke: #252c3a;
   stroke-width: 1;
   opacity: 0.55;
 }
@@ -356,32 +356,9 @@ header h1 {
   margin-bottom: 4px;
 }
 
-.history-scope-switch {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.history-scope-btn {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-  border-radius: 999px;
-  min-height: 28px;
-  font-size: 11px;
-}
-
-.history-scope-btn.active {
-  background: var(--accent);
-  border-color: transparent;
-  color: #08131f;
-  font-weight: 700;
-}
-
 .history-scope-meta {
   min-height: 14px;
-  margin: -2px 0 6px;
+  margin: 0 0 6px;
   text-align: right;
   font-size: 10px;
   color: var(--muted);
@@ -474,14 +451,15 @@ header h1 {
 }
 
 .progress-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: #5a6376;
+  border: 1px solid #ffffff;
+  background: #000000;
 }
 
 .progress-dot.active {
-  background: #8abfff;
+  background: #ffffff;
 }
 
 .progress-center {
@@ -728,8 +706,8 @@ header h1 {
   height: 52px;
   border-radius: 50%;
   border: none;
-  background: var(--accent);
-  color: #08131f;
+  background: #ffffff;
+  color: #000000;
   font-size: 28px;
   box-shadow: 0 6px 12px rgba(0,0,0,0.28);
 }
@@ -1190,7 +1168,7 @@ header h1 {
 
 .calendar-month-ring-track {
   fill: none;
-  stroke: #3b455b;
+  stroke: #252c3a;
   stroke-width: 3.6;
 }
 
@@ -1198,7 +1176,7 @@ header h1 {
   fill: none;
   stroke: #79c9a0;
   stroke-width: 3.6;
-  stroke-linecap: round;
+  stroke-linecap: butt;
 }
 
 .calendar-month-ring-value.complete {
@@ -1268,12 +1246,6 @@ header h1 {
     <div class="progress-page history-page">
       <div class="history-panel" id="historyPanel">
         <div class="history-title">直近7日</div>
-        <div class="history-scope-switch" id="historyScopeSwitch" aria-label="履歴表示切替">
-          <button class="history-scope-btn active" type="button" data-scope="all">全体</button>
-          <button class="history-scope-btn" type="button" data-scope="morning">朝</button>
-          <button class="history-scope-btn" type="button" data-scope="noon">昼</button>
-          <button class="history-scope-btn" type="button" data-scope="night">夜</button>
-        </div>
         <div class="history-scope-meta" id="historyScopeMeta"></div>
         <svg class="history-svg" viewBox="0 0 280 120" aria-hidden="true">
           <line class="history-grid" x1="10" y1="100" x2="270" y2="100"></line>
@@ -1389,15 +1361,6 @@ header h1 {
     <h2 class="habit-modal-title" id="settingsModalTitle">アプリ設定</h2>
     <div class="settings-section">
       <p class="settings-section-title">表示</p>
-      <div class="settings-field">
-        <label for="settingsHistoryScope">履歴の初期表示</label>
-        <select class="settings-select" id="settingsHistoryScope">
-          <option value="all">全体</option>
-          <option value="morning">朝</option>
-          <option value="noon">昼</option>
-          <option value="night">夜</option>
-        </select>
-      </div>
       <div class="settings-switch">
         <label for="settingsConfirmDelete">習慣削除前に確認する</label>
         <input id="settingsConfirmDelete" type="checkbox" />
@@ -1507,7 +1470,6 @@ const historyDetailDateEl = document.getElementById("historyDetailDate");
 const historyDetailRateEl = document.getElementById("historyDetailRate");
 const historyDetailListEl = document.getElementById("historyDetailList");
 const historyEmptyEl = document.getElementById("historyEmpty");
-const historyScopeSwitchEl = document.getElementById("historyScopeSwitch");
 const historyScopeMetaEl = document.getElementById("historyScopeMeta");
 const historyScopeNoteEl = document.getElementById("historyScopeNote");
 const progressDotRingEl = document.getElementById("progressDotRing");
@@ -1536,7 +1498,6 @@ const calendarNextBtn = document.getElementById("calendarNextBtn");
 const calendarPeriodLabelEl = document.getElementById("calendarPeriodLabel");
 const calendarContentEl = document.getElementById("calendarContent");
 const settingsModalBackdropEl = document.getElementById("settingsModalBackdrop");
-const settingsHistoryScopeEl = document.getElementById("settingsHistoryScope");
 const settingsConfirmDeleteEl = document.getElementById("settingsConfirmDelete");
 const settingsNotificationEnabledEl = document.getElementById("settingsNotificationEnabled");
 const settingsNotifyMorningEl = document.getElementById("settingsNotifyMorning");
@@ -1574,7 +1535,6 @@ let isSettingsModalOpen = false;
 let serviceWorkerRegistrationPromise = null;
 const timeSlotButtons = Array.from(timeSlotSwitchEl.querySelectorAll(".time-slot-btn"));
 const habitSlotButtons = Array.from(habitSlotPickerEl.querySelectorAll(".habit-slot-btn"));
-const historyScopeButtons = Array.from(historyScopeSwitchEl.querySelectorAll(".history-scope-btn"));
 
 ringValueEl.style.strokeDasharray = `${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`;
 ringValueEl.style.strokeDashoffset = `${RING_CIRCUMFERENCE}`;
@@ -1630,12 +1590,9 @@ function setActiveTimeSlot(slot) {
 
 function setActiveHistoryScope(scope, options = {}) {
   const { animate = true } = options;
-  const nextScope = normalizeHistoryScope(scope);
+  const nextScope = "all";
   if (activeHistoryScope === nextScope) return;
   activeHistoryScope = nextScope;
-  historyScopeButtons.forEach(b => {
-    b.classList.toggle("active", (b.dataset.scope || "all") === activeHistoryScope);
-  });
   if (isHistoryPageVisible()) {
     if (animate) {
       animateHistoryGraphTransition();
@@ -1885,7 +1842,6 @@ function openAppSettings() {
   const currentNotification = loadNotificationSettings();
   const runtime = getNotificationRuntime();
 
-  settingsHistoryScopeEl.value = normalizeHistoryScope(currentApp.defaultHistoryScope);
   settingsConfirmDeleteEl.checked = currentApp.confirmBeforeDelete !== false;
   settingsNotificationEnabledEl.checked = !!currentNotification.enabled;
   settingsNotifyMorningEl.value = currentNotification.morning;
@@ -1911,7 +1867,7 @@ function openAppSettings() {
   settingsModalBackdropEl.classList.add("show");
   settingsModalBackdropEl.setAttribute("aria-hidden", "false");
   setTimeout(() => {
-    settingsHistoryScopeEl.focus();
+    settingsConfirmDeleteEl.focus();
   }, 0);
 }
 
@@ -2120,17 +2076,16 @@ function closeAppSettingsModal() {
 }
 
 async function saveAppSettingsFromModal() {
-  const currentApp = loadAppSettings();
   const currentNotification = loadNotificationSettings();
   const runtime = getNotificationRuntime();
 
   const nextApp = {
-    defaultHistoryScope: normalizeHistoryScope(settingsHistoryScopeEl.value || currentApp.defaultHistoryScope),
+    defaultHistoryScope: "all",
     confirmBeforeDelete: settingsConfirmDeleteEl.checked
   };
   appSettings = nextApp;
   saveAppSettings(nextApp);
-  setActiveHistoryScope(nextApp.defaultHistoryScope, { animate: false });
+  setActiveHistoryScope("all", { animate: false });
 
   const nextNotification = {
     enabled: runtime !== "unsupported" ? !!settingsNotificationEnabledEl.checked : false,
@@ -2168,7 +2123,7 @@ async function saveAppSettingsFromModal() {
   closeAppSettingsModal();
   await openConfirmModal({
     title: "アプリ設定",
-    message: `保存しました。\n履歴表示: ${nextApp.defaultHistoryScope}\n削除前確認: ${nextApp.confirmBeforeDelete ? "ON" : "OFF"}\n${notificationMessage}`,
+    message: `保存しました。\n削除前確認: ${nextApp.confirmBeforeDelete ? "ON" : "OFF"}\n${notificationMessage}`,
     okText: "OK",
     showCancel: false
   });
@@ -3270,12 +3225,6 @@ habitSlotButtons.forEach(btn => {
     setSelectedHabitSlot(btn.dataset.slot || "morning");
   });
 });
-historyScopeButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const nextScope = normalizeHistoryScope(btn.dataset.scope || "all");
-    setActiveHistoryScope(nextScope, { animate: true });
-  });
-});
 
 calendarBtn.addEventListener("click", () => {
   openCalendarModal();
@@ -3447,7 +3396,7 @@ if (!isEditMode) {
 }
 
 appSettings = loadAppSettings();
-setActiveHistoryScope(appSettings.defaultHistoryScope, { animate: false });
+setActiveHistoryScope("all", { animate: false });
 setActiveTimeSlot("morning");
 
 render();
