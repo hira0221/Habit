@@ -202,9 +202,9 @@ header h1 {
 .time-slot-switch {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  max-width: 320px;
-  margin: 0 auto 10px;
+  gap: 10px;
+  width: min(100% - 24px, 420px);
+  margin: 0 auto 12px;
 }
 
 .time-slot-btn {
@@ -212,8 +212,10 @@ header h1 {
   background: #000000;
   color: #ffffff;
   border-radius: 8px;
-  min-height: 34px;
-  font-size: 12px;
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .time-slot-btn.active {
@@ -279,7 +281,7 @@ header h1 {
 
 .ring-value {
   fill: none;
-  stroke: #79c9a0;
+  stroke: #ffffff;
   stroke-width: 10;
   stroke-linecap: butt;
   transition:
@@ -490,6 +492,36 @@ header h1 {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 8px 12px 118px;
+}
+
+.list.slide-forward {
+  animation: list-slide-forward 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.list.slide-back {
+  animation: list-slide-back 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes list-slide-forward {
+  from {
+    opacity: 0;
+    transform: translateX(34px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes list-slide-back {
+  from {
+    opacity: 0;
+    transform: translateX(-34px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .empty-hint {
@@ -1226,11 +1258,6 @@ header h1 {
 </header>
 
 <div class="progress-wrap" id="progressWrap">
-  <div class="time-slot-switch" id="timeSlotSwitch" aria-label="時間帯切替">
-    <button class="time-slot-btn active" type="button" data-slot="morning">朝</button>
-    <button class="time-slot-btn" type="button" data-slot="noon">昼</button>
-    <button class="time-slot-btn" type="button" data-slot="night">夜</button>
-  </div>
   <div class="progress-slider" id="progressSlider">
     <div class="progress-page ring-page">
       <div class="progress-ring" id="progressRing">
@@ -1273,6 +1300,11 @@ header h1 {
   </div>
 </div>
 
+<div class="time-slot-switch" id="timeSlotSwitch" aria-label="チェックリスト時間帯切替">
+  <button class="time-slot-btn active" type="button" data-slot="morning">朝</button>
+  <button class="time-slot-btn" type="button" data-slot="noon">昼</button>
+  <button class="time-slot-btn" type="button" data-slot="night">夜</button>
+</div>
 <div class="empty-hint" id="emptyHint">何か習慣を追加してみましょう！</div>
 <div class="list" id="list"></div>
 
@@ -1436,12 +1468,8 @@ const HISTORY_SCOPE_COLORS = {
   noon: "#ffffff",
   night: "#6fb6ff"
 };
-const MAIN_RING_SLOT_COLORS = {
-  morning: HISTORY_SCOPE_COLORS.morning,
-  noon: HISTORY_SCOPE_COLORS.noon,
-  night: HISTORY_SCOPE_COLORS.night
-};
 const MAIN_RING_COMPLETE_COLOR = "#79c9a0";
+const MAIN_RING_DEFAULT_COLOR = "#ffffff";
 let habits = loadHabits();
 let openedWrapper = null;
 let isEditMode = false;
@@ -1533,6 +1561,7 @@ let isHeaderMenuOpen = false;
 let appSettings = { ...DEFAULT_APP_SETTINGS };
 let isSettingsModalOpen = false;
 let serviceWorkerRegistrationPromise = null;
+let listTransitionTimer = null;
 const timeSlotButtons = Array.from(timeSlotSwitchEl.querySelectorAll(".time-slot-btn"));
 const habitSlotButtons = Array.from(habitSlotPickerEl.querySelectorAll(".habit-slot-btn"));
 
@@ -1570,6 +1599,10 @@ function clampRate(rate) {
   return Math.max(0, Math.min(100, rate));
 }
 
+function getTimeSlotIndex(slot) {
+  return TIME_SLOTS.findIndex(s => s.id === normalizeTimeSlot(slot));
+}
+
 function setSelectedHabitSlot(slot) {
   selectedHabitSlot = normalizeTimeSlot(slot);
   habitSlotButtons.forEach(btn => {
@@ -1580,12 +1613,16 @@ function setSelectedHabitSlot(slot) {
 function setActiveTimeSlot(slot) {
   const nextSlot = normalizeTimeSlot(slot);
   if (activeTimeSlot === nextSlot) return;
+  const prevIndex = getTimeSlotIndex(activeTimeSlot);
+  const nextIndex = getTimeSlotIndex(nextSlot);
+  const listTransitionDirection = nextIndex > prevIndex ? "forward" : "back";
   activeTimeSlot = nextSlot;
+  selectedHabitSlot = nextSlot;
   timeSlotButtons.forEach(btn => {
     btn.classList.toggle("active", btn.dataset.slot === activeTimeSlot);
   });
   closeOpened();
-  render();
+  render({ listTransitionDirection });
 }
 
 function setActiveHistoryScope(scope, options = {}) {
@@ -1608,7 +1645,7 @@ function setHeaderMenuOpen(open) {
   headerMenuEl.setAttribute("aria-hidden", isHeaderMenuOpen ? "false" : "true");
 }
 
-function openHabitModal(title, initialValue, onSave, initialSlot = activeTimeSlot) {
+function openHabitModal(title, initialValue, onSave, initialSlot = selectedHabitSlot) {
   onHabitModalSave = onSave;
   habitModalTitleEl.textContent = title;
   habitModalInputEl.value = initialValue || "";
@@ -2901,9 +2938,8 @@ function setEditMode(enabled) {
 }
 
 function updateRate() {
-  const visibleHabits = habits.filter(h => normalizeTimeSlot(h.slot) === activeTimeSlot);
-  const total = visibleHabits.length;
-  const done = visibleHabits.filter(h => h.done).length;
+  const total = habits.length;
+  const done = habits.filter(h => h.done).length;
   const rate = total === 0 ? 0 : Math.round(done / total * 100);
   const totalAll = habits.length;
   const doneAll = habits.filter(h => h.done).length;
@@ -2927,7 +2963,7 @@ function updateRate() {
   ringValueEl.classList.toggle("complete", rate === 100);
   ringValueEl.style.stroke = rate === 100
     ? MAIN_RING_COMPLETE_COLOR
-    : (MAIN_RING_SLOT_COLORS[activeTimeSlot] || MAIN_RING_SLOT_COLORS.noon);
+    : MAIN_RING_DEFAULT_COLOR;
 
   if (rate > displayedRate) {
     progressRingEl.classList.remove("animate");
@@ -2951,7 +2987,25 @@ function closeOpened() {
   }
 }
 
-function render() {
+function animateListTransition(direction) {
+  if (!direction) return;
+  const className = direction === "back" ? "slide-back" : "slide-forward";
+  listEl.classList.remove("slide-forward", "slide-back");
+  if (listTransitionTimer) {
+    clearTimeout(listTransitionTimer);
+    listTransitionTimer = null;
+  }
+  listEl.scrollTop = 0;
+  void listEl.offsetWidth;
+  listEl.classList.add(className);
+  listTransitionTimer = setTimeout(() => {
+    listEl.classList.remove(className);
+    listTransitionTimer = null;
+  }, 320);
+}
+
+function render(options = {}) {
+  const { listTransitionDirection = "" } = options;
   listEl.innerHTML = "";
   openedWrapper = null;
   let renderedCount = 0;
@@ -3203,6 +3257,7 @@ function render() {
 
   emptyHintEl.classList.toggle("show", renderedCount === 0);
   updateRate();
+  animateListTransition(listTransitionDirection);
 }
 
 document.getElementById("addBtn").addEventListener("click", () => {
