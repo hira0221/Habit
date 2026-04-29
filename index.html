@@ -225,6 +225,30 @@ header h1 {
   font-weight: 700;
 }
 
+.list-tools {
+  width: min(100% - 24px, 420px);
+  margin: -2px auto 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.incomplete-toggle {
+  border: 1px solid var(--border);
+  background: #000000;
+  color: var(--muted);
+  border-radius: 999px;
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.incomplete-toggle.active {
+  background: #ffffff;
+  border-color: transparent;
+  color: #000000;
+}
+
 .progress-slider {
   display: flex;
   flex-wrap: nowrap;
@@ -1428,6 +1452,9 @@ header h1 {
   <button class="time-slot-btn" type="button" data-slot="noon">昼</button>
   <button class="time-slot-btn" type="button" data-slot="night">夜</button>
 </div>
+<div class="list-tools">
+  <button class="incomplete-toggle" id="incompleteToggle" type="button" aria-pressed="false">未完了のみ</button>
+</div>
 <div class="empty-hint" id="emptyHint">何か習慣を追加してみましょう！</div>
 <div class="list" id="list"></div>
 
@@ -1601,6 +1628,7 @@ let reorderEnabled = false;
 const appEl = document.querySelector(".app");
 const listEl = document.getElementById("list");
 const emptyHintEl = document.getElementById("emptyHint");
+const incompleteToggleEl = document.getElementById("incompleteToggle");
 const dateEl = document.getElementById("date");
 const streakEl = document.getElementById("streak");
 const menuBtn = document.getElementById("menuBtn");
@@ -1680,6 +1708,7 @@ let calendarMode = "month";
 let calendarCursorDate = new Date();
 let activeTimeSlot = "morning";
 let selectedHabitSlot = "morning";
+let showIncompleteOnly = false;
 let activeHistoryScope = "all";
 let isHeaderMenuOpen = false;
 let appSettings = { ...DEFAULT_APP_SETTINGS };
@@ -1748,6 +1777,14 @@ function setActiveTimeSlot(slot) {
   });
   closeOpened();
   render({ listTransitionDirection });
+}
+
+function setIncompleteOnly(enabled) {
+  showIncompleteOnly = !!enabled;
+  incompleteToggleEl.classList.toggle("active", showIncompleteOnly);
+  incompleteToggleEl.setAttribute("aria-pressed", showIncompleteOnly ? "true" : "false");
+  closeOpened();
+  render();
 }
 
 function setActiveHistoryScope(scope, options = {}) {
@@ -3153,6 +3190,11 @@ function animateListTransition(direction) {
   }, 320);
 }
 
+function getActiveTimeSlotLabel() {
+  const slot = TIME_SLOTS.find(s => s.id === activeTimeSlot);
+  return slot ? slot.label : "この時間帯";
+}
+
 function render(options = {}) {
   const { listTransitionDirection = "" } = options;
   listEl.innerHTML = "";
@@ -3161,7 +3203,8 @@ function render(options = {}) {
 
   const visibleHabits = habits
     .map((habit, index) => ({ habit, index }))
-    .filter(entry => normalizeTimeSlot(entry.habit.slot) === activeTimeSlot);
+    .filter(entry => normalizeTimeSlot(entry.habit.slot) === activeTimeSlot)
+    .filter(entry => !showIncompleteOnly || !entry.habit.done);
 
   visibleHabits.forEach((entry, visibleIndex) => {
     const { habit, index } = entry;
@@ -3404,6 +3447,9 @@ function render(options = {}) {
     renderedCount += 1;
   });
 
+  emptyHintEl.textContent = showIncompleteOnly
+    ? `${getActiveTimeSlotLabel()}の未完了はありません`
+    : `${getActiveTimeSlotLabel()}の習慣を追加してみましょう`;
   emptyHintEl.classList.toggle("show", renderedCount === 0);
   updateRate();
   animateListTransition(listTransitionDirection);
@@ -3428,6 +3474,9 @@ habitSlotButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     setSelectedHabitSlot(btn.dataset.slot || "morning");
   });
+});
+incompleteToggleEl.addEventListener("click", () => {
+  setIncompleteOnly(!showIncompleteOnly);
 });
 
 calendarBtn.addEventListener("click", () => {
