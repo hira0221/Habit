@@ -858,53 +858,87 @@ header h1 {
   bottom: 0;
   display: flex;
   justify-content: center;
+  align-items: flex-end;
   pointer-events: none;
   padding: 0 12px calc(32px + env(safe-area-inset-bottom));
-  z-index: 20;
+  z-index: 30;
 }
 
 .bottom-dock {
   width: min(100%, 336px);
   height: 76px;
-  padding: 0 8px;
   border-radius: 24px;
-  background: rgba(36, 43, 56, 0.82);
+  background: rgba(32, 39, 52, 0.88);
   border: 1px solid rgba(138, 191, 255, 0.22);
-  box-shadow: 0 12px 22px rgba(0,0,0,0.3);
-  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   pointer-events: auto;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: center;
-  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
-              opacity 0.25s ease,
-              border-radius 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: width 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+              height 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+              border-radius 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+              background 0.3s ease,
+              box-shadow 0.3s ease;
   transform-origin: bottom center;
+  position: relative;
+  overflow: visible;
 }
 
 .dock-expanded .bottom-dock {
-  transform: scale(0.92);
+  width: min(calc(100% - 24px), 380px);
+  height: 310px;
+  border-radius: 32px;
+  background: rgba(24, 30, 42, 0.97);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(138, 191, 255, 0.25);
+  z-index: 35;
+}
+
+.dock-default-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  height: 76px;
+  width: 100%;
+  padding: 0 8px;
+  transition: opacity 0.2s ease;
+  box-sizing: border-box;
+}
+
+.dock-expanded .dock-default-actions {
   opacity: 0;
   pointer-events: none;
 }
 
 /* ===== ドックハンドル ===== */
 .dock-handle {
-  width: 36px;
+  width: 44px;
   height: 5px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.4);
   margin: 0 auto;
   position: absolute;
   top: -14px;
   left: 50%;
   transform: translateX(-50%);
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
+  z-index: 40;
+}
+
+.dock-handle::before {
+  content: "";
+  position: absolute;
+  top: -16px;
+  bottom: -16px;
+  left: -30px;
+  right: -30px;
 }
 
 .dock-handle:active {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.75);
+  transform: translateX(-50%) scale(1.15);
 }
 
 .bottom-dock {
@@ -929,6 +963,105 @@ header h1 {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.add-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: #ffffff;
+  color: #000000;
+  font-size: 28px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background-color 0.3s ease, color 0.3s ease;
+  z-index: 20;
+  position: relative;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.add-btn.active {
+  transform: rotate(45deg);
+  background: #f0f0f5;
+}
+
+.plus-fan-menu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.fan-btn {
+  position: absolute;
+  top: -28px;
+  left: -28px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(138, 191, 255, 0.32);
+  background: rgba(26, 32, 44, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(0, 0) scale(0.2);
+  transition: transform 0.36s cubic-bezier(0.34, 1.48, 0.64, 1),
+              opacity 0.25s ease,
+              border-color 0.2s ease,
+              box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fan-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.fan-btn-label {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.fan-btn.morning { color: #ffaa50; }
+.fan-btn.noon { color: #ffd650; }
+.fan-btn.night { color: #82a0ff; }
+
+.fan-btn:active {
+  transform: scale(0.88) !important;
+}
+
+.plus-fan-menu.show .fan-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.plus-fan-menu.show .fan-btn.morning {
+  transform: translate(-74px, -84px) scale(1);
+  transition-delay: 0.02s;
+}
+
+.plus-fan-menu.show .fan-btn.noon {
+  transform: translate(0px, -104px) scale(1);
+  transition-delay: 0.06s;
+}
+
+.plus-fan-menu.show .fan-btn.night {
+  transform: translate(74px, -84px) scale(1);
+  transition-delay: 0.10s;
 }
 
 .add-btn {
@@ -978,10 +1111,12 @@ header h1 {
 .dock-expand-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   opacity: 0;
   pointer-events: none;
-  z-index: 19;
+  z-index: 25;
   transition: opacity 0.35s cubic-bezier(0.32, 0.72, 0, 1);
   -webkit-tap-highlight-color: transparent;
 }
@@ -991,34 +1126,22 @@ header h1 {
   pointer-events: auto;
 }
 
-.dock-expand-panel {
-  position: fixed;
-  left: 50%;
-  bottom: calc(20px + env(safe-area-inset-bottom));
-  transform: translateX(-50%) scale(0.88) translateY(20px);
-  width: min(calc(100% - 24px), 380px);
-  max-height: 70vh;
-  background: rgba(36, 43, 56, 0.92);
-  border: 1px solid rgba(138, 191, 255, 0.18);
-  border-radius: 32px;
-  backdrop-filter: blur(40px) saturate(1.4);
-  -webkit-backdrop-filter: blur(40px) saturate(1.4);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
-              0 0 0 0.5px rgba(255, 255, 255, 0.06) inset;
-  padding: 16px 20px 32px;
-  z-index: 21;
+.dock-expand-content {
+  position: absolute;
+  top: 18px;
+  left: 0;
+  width: 100%;
+  padding: 0 20px 20px;
   opacity: 0;
   pointer-events: none;
-  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1),
-              opacity 0.28s ease;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  transition: opacity 0.18s ease;
+  box-sizing: border-box;
 }
 
-.dock-expanded .dock-expand-panel {
-  transform: translateX(-50%) scale(1) translateY(0);
+.dock-expanded .dock-expand-content {
   opacity: 1;
   pointer-events: auto;
+  transition: opacity 0.25s ease 0.08s;
 }
 
 /* パネルハンドル */
@@ -1674,7 +1797,7 @@ header h1 {
 /* Ripple Effect */
 .ripple-container {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 .menu-btn.ripple-container,
 .edit-btn.ripple-container {
@@ -1770,110 +1893,136 @@ header h1 {
   <!-- 拡張パネルオーバーレイ -->
   <div class="dock-expand-overlay" id="dockExpandOverlay"></div>
 
-  <!-- 拡張パネル -->
-  <div class="dock-expand-panel" id="dockExpandPanel">
-    <div class="panel-handle"></div>
-
-    <div class="panel-section-title">習慣を追加</div>
-    <div class="dock-grid">
-      <button class="dock-tile dock-tile--morning" id="tileMorning" type="button">
-        <span class="dock-tile-icon">
-          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2v6" /><path d="M4.22 10.22l1.42 1.42" /><path d="M19.78 10.22l-1.42 1.42" />
-            <path d="M22 17H2" /><path d="M16 17a4 4 0 0 0-8 0" /><path d="M22 21H2" />
-          </svg>
-        </span>
-        <span class="dock-tile-label">朝</span>
-      </button>
-      <button class="dock-tile dock-tile--noon" id="tileNoon" type="button">
-        <span class="dock-tile-icon">
-          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="5" />
-            <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-            <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-          </svg>
-        </span>
-        <span class="dock-tile-label">昼</span>
-      </button>
-      <button class="dock-tile dock-tile--night" id="tileNight" type="button">
-        <span class="dock-tile-icon">
-          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          </svg>
-        </span>
-        <span class="dock-tile-label">夜</span>
-      </button>
-    </div>
-
-    <div class="panel-section-title">ショートカット</div>
-    <div class="dock-grid">
-      <button class="dock-tile dock-tile--stats" id="tileStats" type="button">
-        <span class="dock-tile-icon">
-          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="4,16.5 9,11.5 13,14.2 19.5,7.8"></polyline>
-            <circle cx="4" cy="16.5" r="1.2" fill="currentColor" stroke="none"></circle>
-            <circle cx="19.5" cy="7.8" r="1.2" fill="currentColor" stroke="none"></circle>
-          </svg>
-        </span>
-        <span class="dock-tile-label">統計</span>
-      </button>
-      <button class="dock-tile dock-tile--calendar" id="tileCalendar" type="button">
-        <span class="dock-tile-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <rect x="3.5" y="5.5" width="17" height="15" rx="3.5"></rect>
-            <line x1="3.5" y1="9" x2="20.5" y2="9"></line>
-            <line x1="8" y1="3.8" x2="8" y2="7" stroke-linecap="round"></line>
-            <line x1="16" y1="3.8" x2="16" y2="7" stroke-linecap="round"></line>
-            <circle cx="8.2" cy="12.6" r="0.95" fill="currentColor" stroke="none"></circle>
-            <circle cx="12" cy="12.6" r="0.95" fill="currentColor" stroke="none"></circle>
-            <circle cx="15.8" cy="12.6" r="0.95" fill="currentColor" stroke="none"></circle>
-          </svg>
-        </span>
-        <span class="dock-tile-label">カレンダー</span>
-      </button>
-      <button class="dock-tile dock-tile--settings" id="tileSettings" type="button">
-        <span class="dock-tile-icon">
-          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-        </span>
-        <span class="dock-tile-label">設定</span>
-      </button>
-    </div>
-  </div>
-
   <nav class="bottom-dock" aria-label="下部ナビゲーション">
     <div class="dock-handle" id="dockHandle"></div>
-    <button class="dock-btn history-dock-btn" id="historyBtn" type="button" aria-label="履歴">
-      <svg class="history-dock-svg" viewBox="0 0 24 24" aria-hidden="true">
-        <polyline points="4,16.5 9,11.5 13,14.2 19.5,7.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        <circle cx="4" cy="16.5" r="1.2" fill="currentColor"></circle>
-        <circle cx="9" cy="11.5" r="1.2" fill="currentColor"></circle>
-        <circle cx="13" cy="14.2" r="1.2" fill="currentColor"></circle>
-        <circle cx="19.5" cy="7.8" r="1.2" fill="currentColor"></circle>
-      </svg>
-    </button>
-    <div class="add-btn-wrapper" id="addBtnWrapper">
-      <button class="dock-btn add-btn" id="addBtn" type="button" aria-label="追加">
-        +
+    
+    <div class="dock-default-actions">
+      <button class="dock-btn history-dock-btn" id="historyBtn" type="button" aria-label="履歴">
+        <svg class="history-dock-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <polyline points="4,16.5 9,11.5 13,14.2 19.5,7.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+          <circle cx="4" cy="16.5" r="1.2" fill="currentColor"></circle>
+          <circle cx="9" cy="11.5" r="1.2" fill="currentColor"></circle>
+          <circle cx="13" cy="14.2" r="1.2" fill="currentColor"></circle>
+          <circle cx="19.5" cy="7.8" r="1.2" fill="currentColor"></circle>
+        </svg>
+      </button>
+      <div class="add-btn-wrapper" id="addBtnWrapper">
+        <button class="dock-btn add-btn" id="addBtn" type="button" aria-label="追加">
+          +
+        </button>
+        <div class="plus-fan-menu" id="plusMiniMenu">
+          <button class="fan-btn morning" id="plusMorningBtn" type="button" aria-label="朝の習慣を追加">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v6" /><path d="M4.22 10.22l1.42 1.42" /><path d="M19.78 10.22l-1.42 1.42" />
+              <path d="M22 17H2" /><path d="M16 17a4 4 0 0 0-8 0" /><path d="M22 21H2" />
+            </svg>
+            <span class="fan-btn-label">朝</span>
+          </button>
+          <button class="fan-btn noon" id="plusNoonBtn" type="button" aria-label="昼の習慣を追加">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+            <span class="fan-btn-label">昼</span>
+          </button>
+          <button class="fan-btn night" id="plusNightBtn" type="button" aria-label="夜の習慣を追加">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+            <span class="fan-btn-label">夜</span>
+          </button>
+        </div>
+      </div>
+      <button class="dock-btn calendar-dock-btn" id="calendarBtn" type="button" aria-label="カレンダー">
+        <svg class="calendar-dock-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3.5" y="5.5" width="17" height="15" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"></rect>
+          <line x1="3.5" y1="9" x2="20.5" y2="9" stroke="currentColor" stroke-width="1.8"></line>
+          <line x1="8" y1="3.8" x2="8" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></line>
+          <line x1="16" y1="3.8" x2="16" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></line>
+          <circle cx="8.2" cy="12.6" r="0.95" fill="currentColor"></circle>
+          <circle cx="12" cy="12.6" r="0.95" fill="currentColor"></circle>
+          <circle cx="15.8" cy="12.6" r="0.95" fill="currentColor"></circle>
+          <circle cx="8.2" cy="16.2" r="0.95" fill="currentColor"></circle>
+          <circle cx="12" cy="16.2" r="0.95" fill="currentColor"></circle>
+        </svg>
       </button>
     </div>
-    <button class="dock-btn calendar-dock-btn" id="calendarBtn" type="button" aria-label="カレンダー">
-      <svg class="calendar-dock-svg" viewBox="0 0 24 24" aria-hidden="true">
-        <rect x="3.5" y="5.5" width="17" height="15" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"></rect>
-        <line x1="3.5" y1="9" x2="20.5" y2="9" stroke="currentColor" stroke-width="1.8"></line>
-        <line x1="8" y1="3.8" x2="8" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></line>
-        <line x1="16" y1="3.8" x2="16" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></line>
-        <circle cx="8.2" cy="12.6" r="0.95" fill="currentColor"></circle>
-        <circle cx="12" cy="12.6" r="0.95" fill="currentColor"></circle>
-        <circle cx="15.8" cy="12.6" r="0.95" fill="currentColor"></circle>
-        <circle cx="8.2" cy="16.2" r="0.95" fill="currentColor"></circle>
-        <circle cx="12" cy="16.2" r="0.95" fill="currentColor"></circle>
-      </svg>
-    </button>
+
+    <!-- 拡張パネル -->
+    <div class="dock-expand-content" id="dockExpandPanel">
+      <div class="panel-section-title">習慣を追加</div>
+      <div class="dock-grid">
+        <button class="dock-tile dock-tile--morning" id="tileMorning" type="button">
+          <span class="dock-tile-icon">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v6" /><path d="M4.22 10.22l1.42 1.42" /><path d="M19.78 10.22l-1.42 1.42" />
+              <path d="M22 17H2" /><path d="M16 17a4 4 0 0 0-8 0" /><path d="M22 21H2" />
+            </svg>
+          </span>
+          <span class="dock-tile-label">朝</span>
+        </button>
+        <button class="dock-tile dock-tile--noon" id="tileNoon" type="button">
+          <span class="dock-tile-icon">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+          </span>
+          <span class="dock-tile-label">昼</span>
+        </button>
+        <button class="dock-tile dock-tile--night" id="tileNight" type="button">
+          <span class="dock-tile-icon">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </span>
+          <span class="dock-tile-label">夜</span>
+        </button>
+      </div>
+
+      <div class="panel-section-title">ショートカット</div>
+      <div class="dock-grid">
+        <button class="dock-tile dock-tile--stats" id="tileStats" type="button">
+          <span class="dock-tile-icon">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4,16.5 9,11.5 13,14.2 19.5,7.8"></polyline>
+              <circle cx="4" cy="16.5" r="1.2" fill="currentColor" stroke="none"></circle>
+              <circle cx="19.5" cy="7.8" r="1.2" fill="currentColor" stroke="none"></circle>
+            </svg>
+          </span>
+          <span class="dock-tile-label">統計</span>
+        </button>
+        <button class="dock-tile dock-tile--calendar" id="tileCalendar" type="button">
+          <span class="dock-tile-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3.5" y="5.5" width="17" height="15" rx="3.5"></rect>
+              <line x1="3.5" y1="9" x2="20.5" y2="9"></line>
+              <line x1="8" y1="3.8" x2="8" y2="7" stroke-linecap="round"></line>
+              <line x1="16" y1="3.8" x2="16" y2="7" stroke-linecap="round"></line>
+              <circle cx="8.2" cy="12.6" r="0.95" fill="currentColor" stroke="none"></circle>
+              <circle cx="12" cy="12.6" r="0.95" fill="currentColor" stroke="none"></circle>
+              <circle cx="15.8" cy="12.6" r="0.95" fill="currentColor" stroke="none"></circle>
+            </svg>
+          </span>
+          <span class="dock-tile-label">カレンダー</span>
+        </button>
+        <button class="dock-tile dock-tile--settings" id="tileSettings" type="button">
+          <span class="dock-tile-icon">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </span>
+          <span class="dock-tile-label">設定</span>
+        </button>
+      </div>
+    </div>
   </nav>
 </div>
 
@@ -3928,24 +4077,55 @@ function setDockExpanded(open) {
   bottomDockWrapEl.classList.toggle("dock-expanded", open);
 }
 
-// +ボタンで拡張パネルを開閉
-document.getElementById("addBtn").addEventListener("click", (e) => {
+// プラスボタン＆ファンメニュー制御
+const plusMiniMenu = document.getElementById("plusMiniMenu");
+const addBtnEl = document.getElementById("addBtn");
+
+function togglePlusMenu(show) {
+  const isShow = show !== undefined ? show : !plusMiniMenu.classList.contains("show");
+  plusMiniMenu.classList.toggle("show", isShow);
+  addBtnEl.classList.toggle("active", isShow);
+}
+
+addBtnEl.addEventListener("click", (e) => {
   e.stopPropagation();
-  setDockExpanded(!isDockExpanded);
+  if (isDockExpanded) {
+    setDockExpanded(false);
+  } else {
+    togglePlusMenu();
+  }
 });
 
-// ハンドルバーで開閉
+document.addEventListener("click", (e) => {
+  if (plusMiniMenu && plusMiniMenu.classList.contains("show")) {
+    if (!e.target.closest('#addBtnWrapper')) {
+      togglePlusMenu(false);
+    }
+  }
+});
+
+function setDockExpanded(open) {
+  isDockExpanded = open;
+  bottomDockWrapEl.classList.toggle("dock-expanded", open);
+  if (open) {
+    togglePlusMenu(false);
+  }
+}
+
+// ハンドルバー及びクリック動作の改善
 dockHandleEl.addEventListener("click", (e) => {
   e.stopPropagation();
+  togglePlusMenu(false);
   setDockExpanded(!isDockExpanded);
 });
 
 // オーバーレイクリックで閉じる
 dockExpandOverlayEl.addEventListener("click", () => {
+  togglePlusMenu(false);
   setDockExpanded(false);
 });
 
-// ドック上のスワイプジェスチャー
+// ドックのスワイプ＆タッチ操作性の改善
 (function setupDockSwipe() {
   const dockEl = document.querySelector(".bottom-dock");
   let touchStartY = 0;
@@ -3959,39 +4139,63 @@ dockExpandOverlayEl.addEventListener("click", () => {
   dockEl.addEventListener("touchend", (e) => {
     const deltaY = touchStartY - e.changedTouches[0].clientY;
     const deltaX = Math.abs(touchStartX - e.changedTouches[0].clientX);
-    // 上スワイプ（30px以上、水平方向より大きい）
-    if (deltaY > 30 && deltaY > deltaX) {
-      setDockExpanded(true);
-    }
-  }, { passive: true });
 
-  // パネル上の下スワイプで閉じる
-  dockExpandPanelEl.addEventListener("touchstart", (e) => {
-    touchStartY = e.touches[0].clientY;
-    touchStartX = e.touches[0].clientX;
-  }, { passive: true });
-
-  dockExpandPanelEl.addEventListener("touchend", (e) => {
-    const deltaY = e.changedTouches[0].clientY - touchStartY;
-    const deltaX = Math.abs(touchStartX - e.changedTouches[0].clientX);
-    if (deltaY > 40 && deltaY > deltaX) {
-      setDockExpanded(false);
+    // スワイプ判定閾値を18pxに最適化
+    if (Math.abs(deltaY) > 18 && Math.abs(deltaY) > deltaX) {
+      if (deltaY > 0) {
+        togglePlusMenu(false);
+        setDockExpanded(true);
+      } else {
+        setDockExpanded(false);
+      }
     }
   }, { passive: true });
 })();
 
-// 習慣追加タイル
+// 習慣追加タイル (拡張ドック & プラスファンメニュー)
 const slotLabels = { morning: "朝", noon: "昼", night: "夜" };
 ["morning", "noon", "night"].forEach(slot => {
-  const tileId = "tile" + slot.charAt(0).toUpperCase() + slot.slice(1);
-  document.getElementById(tileId).addEventListener("click", () => {
+  const capSlot = slot.charAt(0).toUpperCase() + slot.slice(1);
+  const tileBtn = document.getElementById("tile" + capSlot);
+  const plusBtn = document.getElementById("plus" + capSlot + "Btn");
+
+  const handleSlotAdd = (e) => {
+    if (e) {
+      e.stopPropagation();
+      if (e.cancelable) e.preventDefault();
+    }
     setDockExpanded(false);
+    togglePlusMenu(false);
     openHabitModal(`${slotLabels[slot]}の習慣を追加`, "", (value, selectedSlot) => {
       habits.push({ text: value, done: false, slot: selectedSlot });
       save();
       render();
     }, slot);
-  });
+  };
+
+  if (tileBtn) {
+    tileBtn.addEventListener("click", handleSlotAdd);
+    tileBtn.addEventListener("touchend", (e) => {
+      e.stopPropagation();
+    }, { passive: true });
+  }
+
+  if (plusBtn) {
+    plusBtn.addEventListener("click", handleSlotAdd);
+    plusBtn.addEventListener("touchend", (e) => {
+      e.stopPropagation();
+    }, { passive: true });
+  }
+});
+
+// その他のドックタイルのタッチ伝搬を防止
+["tileStats", "tileCalendar", "tileSettings"].forEach(id => {
+  const btn = document.getElementById(id);
+  if (btn) {
+    btn.addEventListener("touchend", (e) => {
+      e.stopPropagation();
+    }, { passive: true });
+  }
 });
 
 // 統計タイル
